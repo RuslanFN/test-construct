@@ -28,6 +28,7 @@ function addanswer() {
     }
 }
 </script>
+<style lang="css" src="./style.css" />
 <template>
     <div class="question">
         <div class="question-text-container">

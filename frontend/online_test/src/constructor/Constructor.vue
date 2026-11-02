@@ -17,6 +17,7 @@ import TextAnswerComponent from './TextAnswer.vue';
 const questions = ref<QuestionItem[]>([]);
 const currentSelected = ref<QuestionType>(QuestionType.One)
 function addQuestionItem() {
+    console.log(questions.value)
     let newId = 1
     if (questions.value.length > 0) {
         newId = Math.max(...questions.value.map(q => q.id)) + 1;
@@ -33,7 +34,7 @@ function addQuestionItem() {
     questions.value.push(newQuestionItem)
 }
 </script>
-
+<style lang="css" src="./style.css" />
 <template>
     <div class="questions-list" v-for="questionItem in questions">
         <div v-if="questionItem.question.type === QuestionType.One">
@@ -46,7 +47,7 @@ function addQuestionItem() {
             <MatchAnswersComponent :question="questionItem.question" :answers="(questionItem.answers as MatchAnswers[])"/>
         </div>
         <div v-else-if="questionItem.question.type === QuestionType.Text">
-            <TextAnswerComponent :question="questionItem.question" :answers="(questionItem.answers as TextAnswers[])" />
+            <TextAnswerComponent :question="questionItem.question" :answers="(questionItem.a`nswers as TextAnswers[])" />
         </div>
     </div>
     <div class="add-button-select">
