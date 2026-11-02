@@ -1,0 +1,222 @@
+/* ==========================================================================
+   СТРАНИЦА ПРОФИЛЯ ПОЛЬЗОВАТЕЛЯ (данные + список тестов)
+   ========================================================================== */
+
+.profile-page {
+  max-width: 900px;
+  margin: 30px auto;
+  padding: 0 15px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  box-sizing: border-box;
+}
+
+.profile-page *,
+.profile-page *::before,
+.profile-page *::after {
+  box-sizing: inherit;
+}
+
+/* --------------------------------------------------------------------------
+   1. БЛОК ДАННЫХ ПОЛЬЗОВАТЕЛЯ
+   -------------------------------------------------------------------------- */
+
+.profile-info {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 24px 28px;
+  margin-bottom: 28px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+}
+
+.profile-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 44px;
+  padding: 12px 14px;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.profile-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profile-value {
+  font-size: 14px;
+  font-weight: 500;
+  color: #0f172a;
+  word-break: break-word;
+}
+
+/* --------------------------------------------------------------------------
+   2. ТАБЛИЦА ТЕСТОВ
+   -------------------------------------------------------------------------- */
+
+.tests-table {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+}
+
+.tests-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+/* Заголовок */
+.tests-table thead th {
+  text-align: left;
+  padding: 14px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background-color: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  white-space: nowrap;
+}
+
+/* Ячейки */
+.tests-table tbody td {
+  padding: 14px 16px;
+  color: #1e293b;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+
+.tests-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.tests-table tbody tr {
+  transition: background-color 0.15s ease;
+}
+
+.tests-table tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+/* Название теста */
+.tests-table tbody td:first-child {
+  font-weight: 500;
+  color: #0f172a;
+}
+
+/* Статус — зелёный бейдж.
+   Если позже добавите <span class="status status--published">,
+   сработают классы ниже. */
+
+
+.status {
+  display: inline-block;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.status--published { color: #047857; background-color: #ecfdf5; }
+.status--draft     { color: #b45309; background-color: #fffbeb; }
+
+/* --------------------------------------------------------------------------
+   3. КНОПКИ ДЕЙСТВИЙ
+   -------------------------------------------------------------------------- */
+
+/* Колонка действий: кнопки в ряд с переносом */
+.tests-table tbody td:last-child {
+  white-space: normal;
+}
+
+.tests-table tbody td:last-child button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 2px 4px 2px 0;
+  padding: 7px 12px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.2;
+  color: #2563eb;
+  background-color: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.tests-table tbody td:last-child button:hover {
+  background-color: #dbeafe;
+  border-color: #93c5fd;
+  color: #1d4ed8;
+}
+
+.tests-table tbody td:last-child button:active {
+  transform: scale(0.98);
+}
+
+.tests-table tbody td:last-child button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+}
+
+/* «Удалить» — последняя кнопка в колонке, красный акцент */
+.tests-table tbody td:last-child button:last-child {
+  color: #dc2626;
+  background-color: #fef2f2;
+  border-color: #fecaca;
+}
+
+.tests-table tbody td:last-child button:last-child:hover {
+  background-color: #fee2e2;
+  border-color: #fca5a5;
+  color: #b91c1c;
+}
+
+.tests-table tbody td:last-child button:last-child:focus-visible {
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.2);
+}
+
+/* --------------------------------------------------------------------------
+   4. АДАПТИВНОСТЬ
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 700px) {
+  .profile-info {
+    grid-template-columns: repeat(2, 1fr);
+    padding: 18px;
+  }
+}
+
+@media (max-width: 560px) {
+  .profile-info {
+    grid-template-columns: 1fr;
+  }
+
+  .tests-table {
+    overflow-x: auto;
+  }
+
+  .tests-table table {
+    min-width: 600px;
+  }
+}

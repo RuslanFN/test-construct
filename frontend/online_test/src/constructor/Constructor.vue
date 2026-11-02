@@ -47,7 +47,7 @@ function addQuestionItem() {
             <MatchAnswersComponent :question="questionItem.question" :answers="(questionItem.answers as MatchAnswers[])"/>
         </div>
         <div v-else-if="questionItem.question.type === QuestionType.Text">
-            <TextAnswerComponent :question="questionItem.question" :answers="(questionItem.a`nswers as TextAnswers[])" />
+            <TextAnswerComponent :question="questionItem.question" :answers="(questionItem.answers as TextAnswers[])" />
         </div>
     </div>
     <div class="add-button-select">
