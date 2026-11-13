@@ -220,3 +220,57 @@
     min-width: 600px;
   }
 }
+
+/* --------------------------------------------------------------------------
+   5. ЗАГОЛОВОК СПИСКА / СЛУЖЕБНЫЕ ЭЛЕМЕНТЫ
+   -------------------------------------------------------------------------- */
+
+.profile-actions-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.profile-actions-top h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.logout-btn {
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #dc2626;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.logout-btn:hover {
+  background-color: #fee2e2;
+}
+
+.profile-error {
+  padding: 10px 14px;
+  font-size: 13px;
+  color: #b91c1c;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+}
+
+.qcount {
+  font-size: 12px;
+  color: #94a3b8;
+  font-weight: 400;
+}
+
+.empty-row {
+  text-align: center;
+  color: #94a3b8;
+  padding: 24px 16px !important;
+}

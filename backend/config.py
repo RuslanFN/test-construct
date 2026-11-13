@@ -1,10 +1,70 @@
 import logging
+import os
+
+from dotenv import load_dotenv
+
+load_dotenv()
+
+os.makedirs('logs', exist_ok=True)
 file_handler = logging.FileHandler('logs/logs.txt', mode='a', encoding='utf-8')
+
 stream_handler = logging.StreamHandler()
+
+# Уровень логов настраивается (на проде — INFO/WARNING без дампов ПДн).
+_log_level_name = os.getenv('log_level', 'INFO').upper()
+_log_level = getattr(logging, _log_level_name, logging.INFO)
+
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=_log_level,
     format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
     handlers=[
         file_handler,
         stream_handler
     ])
+
+# pymongo в DEBUG пишет полные документы (ФИО, данные участников) — приглушаем.
+logging.getLogger('pymongo').setLevel(max(_log_level, logging.WARNING))
+
+# JWT
+secret_key = os.getenv('jwt_secret') or ''
+if not secret_key or secret_key == 'change-me-in-env' or len(secret_key) < 32:
+    raise RuntimeError(
+        'Не задан корректный jwt_secret. Укажите в .env случайную строку >= 32 символов. '
+        'Сгенерировать: python -c "import secrets;print(secrets.token_urlsafe(48))"'
+    )
+jwt_algorithm = 'HS256'
+access_token_expire_minutes = int(os.getenv('jwt_expire_minutes', '60'))
+# Время жизни refresh-токена (дней). Пока он валиден — сессию можно
+# продлевать без повторного ввода пароля.
+refresh_token_expire_days = int(os.getenv('refresh_token_expire_days', '14'))
+
+# HttpOnly-cookie с токеном
+cookie_name = os.getenv('cookie_name', 'access_token')
+# Отдельная HttpOnly-кука для refresh-токена (используется только эндпоинтом /refresh)
+refresh_cookie_name = os.getenv('refresh_cookie_name', 'refresh_token')
+# Secure по умолчанию включён (нужен HTTPS). В dev для http явно ставят cookie_secure=false.
+cookie_secure = os.getenv('cookie_secure', 'true').lower() == 'true'
+# SameSite=Strict по умолчанию (защита от CSRF). lax — если нужен переход по внешней ссылке.
+cookie_samesite = os.getenv('cookie_samesite', 'strict').lower()
+cookie_max_age = access_token_expire_minutes * 60
+refresh_cookie_max_age = refresh_token_expire_days * 24 * 60 * 60
+
+# Версия текста согласия на обработку ПДн (для аудита: какой документ принял пользователь)
+pd_consent_version = os.getenv('pd_consent_version', '1.0')
+
+# Администратор, создаётся при запуске, если ещё не существует
+admin_username = os.getenv('admin_username', 'admin')
+admin_email = os.getenv('admin_email', 'admin@example.com')
+admin_password = os.getenv('admin_password') or ''
+if not admin_password or admin_password == 'admin12345':
+    raise RuntimeError(
+        'Не задан корректный admin_password. Укажите в .env надёжный пароль администратора.'
+    )
+
+# Разрешённые источники для CORS (через запятую). В проде за nginx (один origin)
+# CORS не нужен — оставьте пустым. Пример: http://localhost:5173,http://127.0.0.1:5173
+cors_origins = [o.strip() for o in os.getenv('cors_origins', '').split(',') if o.strip()]
+
+
+
+

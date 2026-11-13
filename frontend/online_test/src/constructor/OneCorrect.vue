@@ -27,6 +27,12 @@ function addanswer() {
         props.answers.push(ans);
     }
 }
+
+function removeAnswer(id: number) {
+    const idx = props.answers.findIndex(a => a.id === id);
+    if (idx >= 0) props.answers.splice(idx, 1);
+    if (correctAnswer.value === id) correctAnswer.value = undefined;
+}
 </script>
 <style lang="css" src="./style.css" />
 <template>
@@ -40,6 +46,7 @@ function addanswer() {
             <input type="text" name="answer" v-model="answer.text" />
             <input type="radio" :name="`answer-to-question-${answer.questionId}`" :value="answer.id"
                 v-model="correctAnswer" />
+            <button class="remove-ans" type="button" title="Удалить вариант" @click="removeAnswer(answer.id)">×</button>
         </div>
         <button id="add-ans" @click="addanswer()">добавить вариант ответа</button>
     </div>

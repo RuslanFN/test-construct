@@ -1,0 +1,20 @@
+# Игнорируем всё лишнее, что не должно попадать в образ backend
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.venv/
+.env
+logs/
+*.log
+*.json
+!openapi.json
+*.bin
+*.xlsx
+*.txt
+!requirements.txt
+.git/
+.idea/
+.vscode/
+.pytest_cache/
+.mypy_cache/

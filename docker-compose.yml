@@ -1,0 +1,66 @@
+services:
+  mongo:
+    image: mongo:7
+    container_name: pfdo_mongo
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGO_DB_NAME}
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - pfdo
+    # Порт наружу НЕ публикуем: база доступна только внутри сети compose.
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  backend:
+    build:
+      context: ./backend
+    container_name: pfdo_backend
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      # Внутри compose backend ходит к сервису mongo по имени
+      mongo_host: mongo
+      mongo_port: 27017
+      mongo_username: ${MONGO_USERNAME}
+      mongo_password: ${MONGO_PASSWORD}
+      mongo_db_name: ${MONGO_DB_NAME}
+      # root-пользователь официального образа mongo создаётся в базе admin
+      mongo_auth_source: admin
+      # В проде включите cookie_secure=true и запускайте за HTTPS
+      cookie_secure: ${cookie_secure:-false}
+      cookie_samesite: ${cookie_samesite:-strict}
+      log_level: ${log_level:-INFO}
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks:
+      - pfdo
+    # Порт наружу НЕ публикуем: доступ только через nginx (web).
+
+  web:
+    build:
+      context: ./frontend/online_test
+    container_name: pfdo_web
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "${WEB_PORT:-80}:80"
+    networks:
+      - pfdo
+
+volumes:
+  mongo_data:
+
+networks:
+  pfdo:
+    driver: bridge

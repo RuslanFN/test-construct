@@ -12,6 +12,7 @@ export interface Question {
     questionId: number;
     text: string;
     type: QuestionType;
+    required?: boolean;
 }
 export interface OneCorrect extends Answer {
     text: string;

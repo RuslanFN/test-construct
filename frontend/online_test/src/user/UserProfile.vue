@@ -1,31 +1,104 @@
 <style lang="css" src="./profile.css" />
+<script setup>
+import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+import { api } from '../api';
+import { authState } from '../auth';
+
+const router = useRouter();
+
+const tests = ref([]);
+const loading = ref(false);
+const error = ref('');
+
+const user = authState.user;
+
+function publicLink(token) {
+  return `${window.location.origin}/#/take/${token}`;
+}
+
+async function loadTests() {
+  loading.value = true;
+  error.value = '';
+  try {
+    tests.value = await api.myTests();
+  } catch (e) {
+    error.value = e.message;
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function togglePublish(test) {
+  try {
+    if (test.status === 'published') await api.unpublishTest(test.id);
+    else await api.publishTest(test.id);
+    await loadTests();
+  } catch (e) {
+    error.value = e.message;
+  }
+}
+
+async function removeTest(test) {
+  if (!confirm(`Удалить тест «${test.title}»?`)) return;
+  try {
+    await api.deleteTest(test.id);
+    await loadTests();
+  } catch (e) {
+    error.value = e.message;
+  }
+}
+
+function copyLink(test) {
+  navigator.clipboard?.writeText(publicLink(test.public_token));
+}
+
+function openEditor(id) {
+  router.push({ name: 'editor', params: { id } });
+}
+
+function openResults(id) {
+  router.push({ name: 'results', params: { id } });
+}
+
+onMounted(loadTests);
+
+defineExpose({ loadTests });
+</script>
+
 <template>
-    <div class="profile-info">
+  <div class="profile-page">
+    <div class="profile-info" v-if="user">
         <div class="profile-item">
             <span class="profile-label">имя пользователя</span>
-            <span class="profile-value">IVANOV</span>
+            <span class="profile-value">{{ user.username }}</span>
         </div>
         <div class="profile-item">
             <span class="profile-label">Фамилия</span>
-            <span class="profile-value">Иванов</span>
+            <span class="profile-value">{{ user.last_name }}</span>
         </div>
         <div class="profile-item">
             <span class="profile-label">Имя</span>
-            <span class="profile-value">Иван</span>
+            <span class="profile-value">{{ user.first_name }}</span>
         </div>
         <div class="profile-item">
             <span class="profile-label">Отчество</span>
-            <span class="profile-value">Иванович</span>
+            <span class="profile-value">{{ user.middle_name || '—' }}</span>
         </div>
         <div class="profile-item">
             <span class="profile-label">Почта</span>
-            <span class="profile-value">ivanov.ivan@mail.ru</span>
+            <span class="profile-value">{{ user.email }}</span>
         </div>
         <div class="profile-item">
             <span class="profile-label">Телефон</span>
-            <span class="profile-value">+79012332121</span>
+            <span class="profile-value">{{ user.phone || '—' }}</span>
         </div>
     </div>
+    <div class="profile-actions-top">
+        <h2>Мои тесты</h2>
+    </div>
+    <p v-if="error" class="profile-error">{{ error }}</p>
+    <p v-if="loading">Загрузка…</p>
     <div class="tests-table">
         <table>
             <thead>
@@ -36,29 +109,34 @@
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td>
-                        test name
-                    </td>
-                    <td>
-                        <span class="status status--published ">
-                            опубликован
+                <tr v-for="test in tests" :key="test.id">
+                    <td>{{ test.title }} <span class="qcount">({{ test.questions_count }} вопр.)</span></td>
+
+
+
+
+
+
+                                        <td>
+                        <span class="status" :class="test.status === 'published' ? 'status--published' : 'status--draft'">
+                            {{ test.status === 'published' ? 'опубликован' : 'черновик' }}
                         </span>
                     </td>
                     <td>
-                        <button>
-                            снять с публицации
+                        <button @click="togglePublish(test)">
+                            {{ test.status === 'published' ? 'снять с публикации' : 'опубликовать' }}
                         </button>
-
-                        <button>
-                            редактировать
-                        </button>
-                        <button>
-                            удалить
-                        </button>
+                                                <button @click="openResults(test.id)">результаты</button>
+                        <button v-if="test.status === 'published'" @click="copyLink(test)">копировать ссылку</button>
+                        <button @click="openEditor(test.id)">редактировать</button>
+                        <button @click="removeTest(test)">удалить</button>
                     </td>
+                </tr>
+                <tr v-if="!loading && tests.length === 0">
+                    <td colspan="3" class="empty-row">Тестов пока нет</td>
                 </tr>
             </tbody>
         </table>
     </div>
+  </div>
 </template>

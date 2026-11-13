@@ -1,0 +1,66 @@
+# ==========================================================
+#  .gitignore  —  корневой (главный) для всего репозитория
+# ==========================================================
+
+# ---------- Секреты / окружение ----------
+.env
+.env.*
+*.env
+!.env.example
+!env.example
+
+# ---------- Python ----------
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage*
+coverage.xml
+htmlcov/
+venv/
+.venv/
+env/
+env3.*/
+
+# ---------- Логи (в корне и в backend) ----------
+logs/
+*.log
+backend/logs/
+
+# ---------- Временные артефакты отладки backend ----------
+# (дампы/экспорты/куки — не должны попадать в репозиторий)
+backend/*.json
+backend/*.bin
+backend/*.xlsx
+backend/*.txt
+# исключения — нужные файлы
+!backend/requirements.txt
+!backend/openapi.json
+
+# ---------- Node / Frontend ----------
+node_modules/
+dist/
+dist-ssr/
+*.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ---------- Docker ----------
+# (Dockerfile, compose и .dockerignore — НЕ игнорируем, они нужны для деплоя)
+
+# ---------- IDE / OS ----------
+.idea/
+.vscode/
+!.vscode/extensions.json
+.DS_Store
+Thumbs.db
+*.suo
+*.sw?
+
+# ---------- Прочий мусор ----------
+d
+test.html
