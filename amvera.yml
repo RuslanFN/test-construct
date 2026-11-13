@@ -1,0 +1,22 @@
+meta:
+  environment: docker-compose
+  toolchain:
+    name: docker-compose
+    version: "3.9"
+
+# Разворачиваем сервисы из docker-compose.yml
+# (web = nginx+фронт, backend = FastAPI, mongo = БД)
+build:
+  docker:
+    # путь к compose-файлу относительно корня проекта
+    composeFile: docker-compose.yml
+
+# Порт, который Amvera будет проксировать наружу (HTTP/HTTPS).
+# У нас наружу смотрит только сервис web (nginx) на порту 80.
+run:
+  # веб-приложение (а не фоновая задача)
+  persistenceMount: /data
+  containerPort: 80
+
+# Переменные окружения задаются в панели Amvera (раздел «Переменные»),
+# НЕ в этом файле — секреты не должны попадать в репозиторий.
