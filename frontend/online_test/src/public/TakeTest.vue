@@ -1,4 +1,4 @@
-<script setup>
+упо<script setup>
 import { ref, onMounted, computed, watch } from 'vue';
 import { api } from '../api';
 
@@ -223,6 +223,7 @@ watch(
             <input type="text" v-model="participant.middle_name" placeholder="Иванович" />
           </label>
           <label class="take-field">
+
             <span>Номер сертификата ПФДО <span class="take-required">*</span></span>
             <input
               type="text"

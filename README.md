@@ -1,4 +1,4 @@
-# Платформа онлайн-тестирования (Кванториум / ПФДО)
+ь # Платформа онлайн-тестирования
 
 Сервис для проведения тестирования обучающихся методистами сети технопарков «Кванториум».
 
@@ -35,6 +35,47 @@ API healthcheck: `http://<host>/api/health`.
 | `mongo`   | MongoDB 7 с volume `mongo_data`                        | —           |
 
 Порт базы и backend **наружу не публикуются** — доступ только через `web`/внутреннюю сеть.
+
+## Деплой на Amvera (один Dockerfile)
+
+Amvera **не поддерживает** `docker-compose`. Проект собирается в **единый образ**
+(корневой `Dockerfile`): Vite собирает фронт → nginx отдаёт статику и проксирует
+`/api` на uvicorn, запущенный в том же контейнере (`docker/start.sh`).
+
+- `amvera.yml` — манифест (`environment: docker`, `containerPort: 80`).
+- **MongoDB выносится отдельно**: managed-MongoDB Amvera или внешний сервер.
+  Хост/порт/логин/пароль задаются переменными в панели Amvera:
+  `mongo_host`, `mongo_port`, `mongo_username`, `mongo_password`, `mongo_db_name`,
+  при необходимости `mongo_auth_source`.
+- Публичный порт контейнера — **80**.
+
+### Переменные в панели Amvera (→ «Переменные»)
+
+Обязательные (секреты — с галочкой «Секрет»):
+
+```
+mongo_host=<хост Mongo>
+mongo_port=27017
+mongo_username=<логин>
+mongo_password=<пароль>          # Секрет
+mongo_db_name=tests
+jwt_secret=<случайная строка >=32>   # Секрет
+admin_username=admin
+admin_email=<email>
+admin_password=<сильный пароль>      # Секрет
+cookie_secure=true
+cookie_samesite=strict
+log_level=INFO
+```
+
+> На Amvera за HTTPS обязательно `cookie_secure=true`.
+
+### Деплой через git
+
+```bash
+git remote add amvera <url-репозитория-Amvera>
+git push amvera main
+```
 
 ## Переменные окружения
 

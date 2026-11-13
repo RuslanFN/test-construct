@@ -1,22 +1,20 @@
 meta:
-  environment: docker-compose
+  environment: docker
   toolchain:
-    name: docker-compose
-    version: "3.9"
+    name: docker
+    version: latest
 
-# Разворачиваем сервисы из docker-compose.yml
-# (web = nginx+фронт, backend = FastAPI, mongo = БД)
 build:
   docker:
-    # путь к compose-файлу относительно корня проекта
-    composeFile: docker-compose.yml
+    dockerfile: Dockerfile
+    context: .
 
-# Порт, который Amvera будет проксировать наружу (HTTP/HTTPS).
-# У нас наружу смотрит только сервис web (nginx) на порту 80.
 run:
-  # веб-приложение (а не фоновая задача)
-  persistenceMount: /data
+  # Единый контейнер: nginx отдаёт фронт и проксирует /api на uvicorn
   containerPort: 80
+  # Персистентное хранилище (если понадобится для логов/файлов)
+  persistenceMount: /data
 
-# Переменные окружения задаются в панели Amvera (раздел «Переменные»),
-# НЕ в этом файле — секреты не должны попадать в репозиторий.
+# Переменные окружения (mongo_host, mongo_username, mongo_password,
+# mongo_db_name, jwt_secret, admin_*, cookie_*, ...) задаются
+# в панели Amvera → «Переменные». Секреты — с галочкой «Секрет».

@@ -1,0 +1,32 @@
+# Корневой .dockerignore — сборка идёт из корня (context: .)
+.git/
+.gitignore
+.env
+.env.*
+*.env
+backend/.env
+backend/.env.*
+
+# Python
+backend/venv/
+backend/.venv/
+**/__pycache__/
+**/*.pyc
+backend/logs/
+logs/
+*.log
+
+# Node
+frontend/online_test/node_modules/
+frontend/online_test/dist/
+
+# Мусор/архивы
+d
+test.html
+*.zip
+docs/
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store

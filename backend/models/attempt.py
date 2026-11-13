@@ -17,7 +17,7 @@ class Participant(BaseModel):
     last_name: str
     first_name: str
     middle_name: str | None = None
-    certificate_number: str  # номер сертификата ПФДО, 10 цифр
+    certificate_number: str  # номер сертификата, 10 цифр
 
 
 class Attempt(BaseModel):
