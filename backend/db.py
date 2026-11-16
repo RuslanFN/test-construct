@@ -11,14 +11,8 @@ load_dotenv()
 
 
 def _env(name: str, default: str | None = None) -> str | None:
-    """Читаем переменную и снимаем обрамляющие кавычки (частая ошибка в .env)."""
-    val = os.getenv(name, default)
-    if val is None:
-        return None
-    val = val.strip()
-    if len(val) >= 2 and val[0] == val[-1] and val[0] in ('"', "'"):
-        val = val[1:-1]
-    return val
+    """Читаем переменную без учёта регистра (lower → UPPER → MONGO_INITDB_*)."""
+    return getenv(name, default)
 
 
 mongo_host = _env('mongo_host')
