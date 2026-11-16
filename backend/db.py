@@ -7,12 +7,14 @@ from pymongo.asynchronous.database import AsyncDatabase
 from pymongo.asynchronous.mongo_client import AsyncMongoClient
 from pymongo.errors import ServerSelectionTimeoutError
 
+from services.env import getenv
+
 load_dotenv()
 
 
 def _env(name: str, default: str | None = None) -> str | None:
     """Читаем переменную без учёта регистра (lower → UPPER → MONGO_INITDB_*)."""
-    return os.getenv(name, default)
+    return getenv(name, default)
 
 
 mongo_host = _env('mongo_host')
