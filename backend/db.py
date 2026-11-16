@@ -12,7 +12,7 @@ load_dotenv()
 
 def _env(name: str, default: str | None = None) -> str | None:
     """Читаем переменную без учёта регистра (lower → UPPER → MONGO_INITDB_*)."""
-    return getenv(name, default)
+    return os.getenv(name, default)
 
 
 mongo_host = _env('mongo_host')
