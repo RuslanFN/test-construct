@@ -40,3 +40,17 @@ def getenv(name: str, default: str | None = None) -> str | None:
     if len(val) >= 2 and val[0] == val[-1] and val[0] in ('"', "'"):
         val = val[1:-1]
     return val
+
+
+def getenv_source(name: str) -> str:
+    """Имя переменной, из которого реально взято значение (для диагностики).
+
+    Возвращает 'lower:<имя>', 'upper:<имя>', 'alias:<имя>' или '<нет>'.
+    Полезно в логах: сразу видно, подхватилось ли нужное имя.
+    """
+    candidates = [(name.lower(), 'lower'), (name.upper(), 'upper')]
+    candidates += [(a, 'alias') for a in _ALIASES.get(name.lower(), ())]
+    for key, kind in candidates:
+        if os.getenv(key) is not None:
+            return f'{kind}:{key}'
+    return '<нет>'

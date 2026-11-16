@@ -1,13 +1,15 @@
 import asyncio
-import os
+import logging
 from urllib.parse import quote_plus
 
 from dotenv import load_dotenv
 from pymongo.asynchronous.database import AsyncDatabase
 from pymongo.asynchronous.mongo_client import AsyncMongoClient
-from pymongo.errors import ServerSelectionTimeoutError
+from pymongo.errors import OperationFailure, ServerSelectionTimeoutError
 
-from services.env import getenv
+from services.env import getenv, getenv_source
+
+log = logging.getLogger(__name__)
 
 load_dotenv()
 
@@ -31,6 +33,20 @@ _user = quote_plus(mongo_username or '')
 _pwd = quote_plus(mongo_password or '')
 _auth = f'?authSource={mongo_auth_source}' if mongo_auth_source else ''
 mongo_uri = f"mongodb://{_user}:{_pwd}@{mongo_host}:{mongo_port}/{mongo_db_name}{_auth}"
+
+# Диагностика подключения (без секретов): видно, какие значения ушли в Mongo
+# и из какого имени они взяты (помогает ловить дубли/опечатки в панели Amvera).
+log.info(
+    'Mongo: host=%s port=%s db=%s user=%s authSource=%s пароль=%s (%s симв., из %s)',
+    mongo_host,
+    mongo_port,
+    mongo_db_name,
+    mongo_username or '<пусто>',
+    mongo_auth_source or '<не задан>',
+    'задан' if mongo_password else 'ПУСТОЙ',
+    len(mongo_password or ''),
+    getenv_source('mongo_password'),
+)
 
 _client: AsyncMongoClient | None = None
 
@@ -73,11 +89,18 @@ async def test_db() -> None:
     try:
         result = await db.command('ping')
         print(f'Успешное подключение: {result}')
+    except OperationFailure as err:
+        # 'Authentication failed' — соединение принято, но логин/пароль не приняты.
+        print(
+            f'Ошибка аутентификации Mongo: {err}. '
+            f'Пользователь={mongo_username!r}, authSource={mongo_auth_source or "<не задан>"!r}, '
+            f'db={mongo_db_name!r}. Проверьте, что пользователь есть в базе '
+            f'{mongo_auth_source or mongo_db_name!r} и пароль совпадает.'
+        )
     except ServerSelectionTimeoutError as err:
         print(f'Превышено время ожидания сервера: {err}')
 
 
 if __name__ == "__main__":
     asyncio.run(test_db())
-
 
