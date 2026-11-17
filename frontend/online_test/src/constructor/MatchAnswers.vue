@@ -7,6 +7,7 @@ const props = defineProps<{
 }>();
 
 function addanswer() {
+    // новая пара — без uuid, сервер присвоит id при сохранении
     let nextId = 1; 
     if (props.answers.length > 0) {
         nextId = Math.max(...props.answers.map(a => a.id), 0) + 1;

@@ -44,11 +44,13 @@ async def search_tests(
             pass
         query['$or'] = conds
 
-    # собираем попытки по тестам для счётчика
+    # Счётчик попыток по тестам.
+    # В pymongo.asynchronous aggregate() — корутина: сначала await, затем итерируем.
     attempts_counts: dict = {}
-    async for doc in db['attempts'].aggregate([
+    cursor = await db['attempts'].aggregate([
         {'$group': {'_id': '$test_id', 'count': {'$sum': 1}}},
-    ]):
+    ])
+    async for doc in cursor:
         attempts_counts[doc['_id']] = doc['count']
 
     items: list[AdminTestItem] = []

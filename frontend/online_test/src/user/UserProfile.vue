@@ -97,8 +97,7 @@ defineExpose({ loadTests });
     <div class="profile-actions-top">
         <h2>Мои тесты</h2>
     </div>
-    <p v-if="error" class="profile-error">{{ error }}</p>
-    <p v-if="loading">Загрузка…</p>
+        <p v-if="error" class="profile-error">{{ error }}</p>
     <div class="tests-table">
         <table>
             <thead>
@@ -109,6 +108,9 @@ defineExpose({ loadTests });
                 </tr>
             </thead>
             <tbody>
+                <tr v-if="loading">
+                    <td colspan="3" class="empty-row">Загрузка…</td>
+                </tr>
                 <tr v-for="test in tests" :key="test.id">
                     <td>{{ test.title }} <span class="qcount">({{ test.questions_count }} вопр.)</span></td>
 

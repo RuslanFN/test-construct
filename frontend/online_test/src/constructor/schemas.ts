@@ -5,11 +5,12 @@ export enum QuestionType{
     Text = 'text'
 }
 export interface Answer {
-    id: number;
-    questionId: number; 
+    id: number;                   // локальный номер для v-for :key
+    questionId: number | string;  // как у вопроса: число — новый, строка — UUID с бэкенда
+    uuid?: string;                // настоящий UUID с бэкенда (нет у новых элементов)
 }
 export interface Question {
-    questionId: number;
+    questionId: number | string;  // число — новый вопрос, строка — UUID с бэкенда
     text: string;
     type: QuestionType;
     required?: boolean;

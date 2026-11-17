@@ -48,6 +48,14 @@ async def update_test(test_id: uuid.UUID, payload: TestCreate, user: dict) -> di
     if existing is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, 'Тест не найден')
 
+    # Опубликованный тест неизменяем: иначе правки вопросов/вариантов рвут
+    # связь с уже сохранёнными попытками (в них хранятся id вопросов и ответов).
+    if existing.get('status') == TestStatus.PUBLISHED.value:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            'Опубликованный тест нельзя редактировать. Снимите его с публикации, чтобы изменить.',
+        )
+
     # Защита от затирания: если клиент прислал версию, а на сервере документ
     # успели изменить (другая вкладка/устройство) — отдаём 409 Conflict.
     if payload.expected_updated_at is not None:

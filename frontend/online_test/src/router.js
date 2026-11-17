@@ -27,6 +27,13 @@ const router = createRouter({
 
 // Гард: перед каждым переходом гарантируем, что сессия восстановлена.
 router.beforeEach(async (to) => {
+  // Публичные страницы (например, прохождение теста по ссылке /take/:token)
+  // не должны зависеть от авторизации: не дёргаем /api/auth/me и не ждём
+  // восстановления сессии. Так ссылка одинаково работает и в инкогнито.
+  if (to.meta.public) {
+    return true;
+  }
+
   if (!authState.initialized) {
     await restoreSession();
   }

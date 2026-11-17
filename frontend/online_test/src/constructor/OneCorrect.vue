@@ -18,6 +18,7 @@ watch(correctAnswer, (newValue, oldValue) => {
 })
 
 function addanswer() {
+    // uuid НЕ задаём: это новый вариант, сервер присвоит ему id при сохранении
     if (props.answers.length > 0) {
         const nextId = Math.max(...props.answers.map(a => a.id), 0) + 1;
         const ans = { id: nextId, text: "", isCorrect: false, questionId: props.question.questionId };

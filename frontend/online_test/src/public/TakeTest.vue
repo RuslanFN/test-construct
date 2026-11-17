@@ -1,4 +1,4 @@
-упо<script setup>
+<script setup>
 import { ref, onMounted, computed, watch } from 'vue';
 import { api } from '../api';
 
@@ -108,7 +108,11 @@ async function load() {
       }
     }
   } catch (e) {
-    error.value = e.message;
+    if (e.status === 404) {
+      error.value = 'Тест снят с публикации или был удалён.';
+    } else {
+      error.value = e.message;
+    }
   } finally {
     loading.value = false;
   }
@@ -157,7 +161,14 @@ async function submit() {
     };
     result.value = await api.submitAttempt(props.token, payload);
   } catch (e) {
-    error.value = e.message;
+    if (e.status === 404) {
+      // Тест сняли с публикации или удалили, пока человек его проходил:
+      // результат не сохраняется — проходимый тест уже неактуален.
+      error.value = 'Тест снят с публикации или был удалён — результат не сохранён.';
+      test.value = null;
+    } else {
+      error.value = e.message;
+    }
   } finally {
     submitting.value = false;
   }
