@@ -130,7 +130,11 @@ defineExpose({ loadTests });
                         </button>
                                                 <button @click="openResults(test.id)">результаты</button>
                         <button v-if="test.status === 'published'" @click="copyLink(test)">копировать ссылку</button>
-                        <button @click="openEditor(test.id)">редактировать</button>
+                        <button
+                            :disabled="test.status === 'published'"
+                            :title="test.status === 'published' ? 'Опубликованный тест редактировать нельзя — сначала снимите с публикации' : 'Редактировать тест'"
+                            @click="openEditor(test.id)"
+                        >редактировать</button>
                         <button @click="removeTest(test)">удалить</button>
                     </td>
                 </tr>

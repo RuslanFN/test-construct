@@ -179,6 +179,17 @@
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
 }
 
+/* Недоступное действие (например, «редактировать» для опубликованного теста) */
+.tests-table tbody td:last-child button:disabled,
+.tests-table tbody td:last-child button:disabled:hover,
+.tests-table tbody td:last-child button:disabled:active {
+  color: #94a3b8;
+  background-color: #f1f5f9;
+  border-color: #e2e8f0;
+  cursor: not-allowed;
+  transform: none;
+}
+
 /* «Удалить» — последняя кнопка в колонке, красный акцент */
 .tests-table tbody td:last-child button:last-child {
   color: #dc2626;

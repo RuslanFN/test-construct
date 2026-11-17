@@ -5,9 +5,23 @@ from pydantic import BaseModel, Field
 
 
 class QuestionResult(BaseModel):
-    """Результат по одному вопросу."""
+    """
+    Результат по одному вопросу.
+
+    Хранит СНИМОК текстов на момент прохождения (`text`, `given_texts`,
+    `correct_texts`). Благодаря этому правка или удаление вариантов ответа
+    в тесте не искажает уже сохранённые результаты.
+
+    Поля `given_answer` / `correct_answer` оставлены как id-ссылки
+    (совместимость со старыми попытками).
+    """
     question_id: uuid.UUID
     is_correct: bool
+    # снимок текстов на момент прохождения
+    text: str = ''
+    given_texts: list[str] = Field(default_factory=list)
+    correct_texts: list[str] = Field(default_factory=list)
+    # id-ссылки (legacy, для старых попыток)
     given_answer: list[str] = Field(default_factory=list)  # id выбранных ответов/пар
     correct_answer: list[str] = Field(default_factory=list)
 

@@ -59,6 +59,7 @@ def _given_matches(question: dict, given: GivenAnswer) -> list[str]:
 def _check_question(question: dict, given: GivenAnswer | None) -> QuestionResult:
     qtype = question['type']
     qid = question['id']
+    qtext = question.get('text', '')
 
     if given is None:
         given = GivenAnswer(question_id=str(qid))
@@ -68,6 +69,9 @@ def _check_question(question: dict, given: GivenAnswer | None) -> QuestionResult
         is_correct = given_ids == correct
         return QuestionResult(
             question_id=qid, is_correct=is_correct,
+            text=qtext,
+            given_texts=[_answer_text_by_id(question, g) for g in given_ids],
+            correct_texts=[_answer_text_by_id(question, c) for c in correct],
             given_answer=given_ids, correct_answer=correct,
         )
 
@@ -82,6 +86,9 @@ def _check_question(question: dict, given: GivenAnswer | None) -> QuestionResult
         is_correct = given_text == correct_text.strip().lower() and correct_text != ''
         return QuestionResult(
             question_id=qid, is_correct=is_correct,
+            text=qtext,
+            given_texts=[given_text] if given_text else [],
+            correct_texts=[correct_text] if correct_text else [],
             given_answer=[given_text], correct_answer=[correct_text],
         )
 
@@ -90,6 +97,9 @@ def _check_question(question: dict, given: GivenAnswer | None) -> QuestionResult
     given_m = _given_matches(question, given)
     return QuestionResult(
         question_id=qid, is_correct=given_m == correct,
+        text=qtext,
+        given_texts=_readable_given_match(question, given_m),
+        correct_texts=_readable_correct(question, correct),
         given_answer=given_m, correct_answer=correct,
     )
 
@@ -203,7 +213,8 @@ def _answer_text_by_id(question: dict, answer_id: str) -> str:
     for a in question.get('answers', []):
         if str(a['id']) == str(answer_id):
             return a['text']
-    return answer_id
+    # вариант удалён из теста после прохождения — не показываем сырой UUID
+    return '— вариант удалён —'
 
 
 def _readable_given(question: dict, given: list[str]) -> list[str]:
@@ -259,16 +270,29 @@ async def get_attempt_detail(test_doc: dict, attempt_id: uuid.UUID) -> AttemptDe
     for r in doc.get('results', []):
         q = questions_by_id.get(str(r['question_id']))
         qtype = q['type'] if q else 'one'
-        text = q.get('text', '') if q else ''
         given = r.get('given_answer', [])
         correct = r.get('correct_answer', [])
-        if q:
+
+        # Если в попытке есть снимок текстов — используем его. Тогда результат
+        # не зависит от того, что правки/удаления были сделаны в тесте позже.
+        has_snapshot = 'given_texts' in r and 'correct_texts' in r
+        if has_snapshot:
+            text = r.get('text', '')
+            given_txt = r.get('given_texts', [])
+            correct_txt = r.get('correct_texts', [])
+            if q:
+                qt = q.get('type')
+                if qt:
+                    qtype = qt
+        elif q:
+            text = q.get('text', '')
             if qtype == QuestionType.MATCH.value:
                 given_txt = _readable_given_match(q, given)
             else:
                 given_txt = _readable_given(q, given)
             correct_txt = _readable_correct(q, correct)
         else:
+            text = ''
             given_txt, correct_txt = given, correct
         details.append(QuestionDetail(
             question_id=str(r['question_id']),

@@ -6,15 +6,17 @@ const props = defineProps<{
     question: Question;
     answers: OneCorrect[]; 
 }>();
-const correctAnswer = ref<number>();
+// Инициализируем выбранный вариант из уже загруженных данных,
+// иначе при открытии теста радио пустое, хотя правильный ответ есть.
+const correctAnswer = ref<number | undefined>(
+    props.answers.find(a => a.isCorrect)?.id
+);
 
-watch(correctAnswer, (newValue, oldValue) => {
-    if (newValue) {
-        props.answers.forEach(ans => {
-            ans.isCorrect = (ans.id === newValue);
-        });
-        console.log(props.answers);
-    }
+watch(correctAnswer, (newValue) => {
+    if (newValue === undefined) return;
+    props.answers.forEach(ans => {
+        ans.isCorrect = (ans.id === newValue);
+    });
 })
 
 function addanswer() {
