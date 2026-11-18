@@ -2,12 +2,16 @@
 
 Сервис для проведения тестирования обучающихся методистами сети технопарков «Кванториум».
 
+> **Архитектура проекта, модель данных и принятые решения** — см. [`docs/architecture.md`](docs/architecture.md).
+> Аудит безопасности и 152-ФЗ — [`docs/security-audit.md`](docs/security-audit.md).
+> Краткие правила работы с кодом — [`AGENTS.md`](AGENTS.md).
+
 ## Стек
 
 - **Backend:** FastAPI + uvicorn, PyMongo (Async), JWT в HttpOnly-cookie.
 - **Frontend:** Vue 3 + Vite, раздаётся через nginx.
 - **БД:** MongoDB 7.
-- **Развёртывание:** Docker Compose (backend + mongo + nginx-фронт в одном файле).
+- **Развёртывание:** единый Docker-образ (frontend + backend + nginx); `docker-compose.yml` — только для локальной разработки.
 
 ## Быстрый запуск (Docker)
 
@@ -76,6 +80,18 @@ log_level=INFO
 git remote add amvera <url-репозитория-Amvera>
 git push amvera main
 ```
+
+## Хранение изображений
+
+Картинки к вопросам хранятся **на диске** (по умолчанию `/data/uploads`, меняется
+переменной `media_dir`), метаданные — в MongoDB (коллекция `media`). На Amvera `/data` —
+постоянный диск. Локально нужен volume, иначе файлы пропадут при пересоздании контейнера:
+
+```bash
+docker run -v online_test_media:/data/uploads ...
+```
+
+Ограничения: PNG/JPEG/WEBP, до 5 МБ. Файлы удаляются вместе с вопросом/тестом.
 
 ## Переменные окружения
 
