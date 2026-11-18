@@ -14,6 +14,7 @@ export interface Question {
     text: string;
     type: QuestionType;
     required?: boolean;
+    imageIds?: string[];          // id изображений из /api/media
 }
 export interface OneCorrect extends Answer {
     text: string;

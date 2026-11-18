@@ -526,3 +526,82 @@ input[type="checkbox"]:checked::before {
 .constructor-fields:disabled button {
   cursor: not-allowed;
 }
+
+/* --------------------------------------------------------------------------
+   8. ЗАГРУЗКА ИЗОБРАЖЕНИЙ К ВОПРОСУ
+   -------------------------------------------------------------------------- */
+
+.img-upload {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px dashed #e2e8f0;
+}
+
+.img-upload-preview {
+  margin-bottom: 12px;
+}
+
+.img-upload-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.img-upload-count {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.img-remove {
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #dc2626;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.img-remove:hover { background-color: #fee2e2; }
+
+.img-add {
+  display: inline-flex;
+  align-items: center;
+  padding: 9px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #2563eb;
+  background-color: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.img-add:hover { background-color: #dbeafe; border-color: #93c5fd; }
+.img-add--busy { opacity: 0.6; cursor: progress; }
+
+/* Настоящий input скрыт: кликаем по label */
+.img-add input[type="file"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.img-error {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: #b91c1c;
+}
+
+.img-hint {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: #94a3b8;
+}

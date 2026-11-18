@@ -152,6 +152,21 @@ export const api = {
     body: JSON.stringify(payload),
   }),
 
+  // media (изображения к вопросам)
+  // multipart: Content-Type выставляет браузер сам (с boundary),
+  // поэтому заголовок из request() убираем.
+  uploadMedia: (file) => {
+    const form = new FormData();
+    form.append('file', file);
+    return request('/api/media', {
+      method: 'POST',
+      body: form,
+      headers: {},
+    });
+  },
+  deleteMedia: (id) => request(`/api/media/${id}`, { method: 'DELETE' }),
+  mediaUrl: (id) => `${BASE_URL}/api/media/${id}`,
+
   // admin
   adminTests: (params = {}) => {
     const qs = new URLSearchParams();

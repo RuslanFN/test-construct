@@ -58,6 +58,7 @@ class QuestionPublic(BaseModel):
     answers: list[AnswerPublic] = Field(default_factory=list)
     pairs_left: list[str] = Field(default_factory=list)
     pairs_right: list[str] = Field(default_factory=list)
+    image_urls: list[str] = Field(default_factory=list)  # готовые ссылки /api/media/{id}
 
 
 TestPublic.model_rebuild()

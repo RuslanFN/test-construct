@@ -36,6 +36,8 @@ class Question(BaseModel):
 
     answers: list[Answer] = Field(default_factory=list)
     pairs: list[MatchPair] = Field(default_factory=list)
+    # изображения к вопросу (коллекция `media`), в порядке показа
+    image_ids: list[uuid.UUID] = Field(default_factory=list)
 
     order: int = 0
 

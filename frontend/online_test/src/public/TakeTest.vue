@@ -1,6 +1,8 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue';
 import { api } from '../api';
+import ImageCarousel from '../components/ImageCarousel.vue';
+import '../components/carousel.css';
 
 const props = defineProps({ token: { type: String, required: true } });
 
@@ -253,6 +255,10 @@ watch(
           <span class="take-qnum">{{ qi + 1 }}.</span>
           {{ q.text || (q.type === 'match' ? 'Сопоставьте значения:' : 'Вопрос ' + (qi + 1)) }}
           <span v-if="q.required" class="take-required" title="Обязательный вопрос">*</span>
+        </div>
+
+        <div v-if="q.image_urls && q.image_urls.length" class="take-qimages">
+          <ImageCarousel :urls="q.image_urls" />
         </div>
 
         <!-- один правильный -->

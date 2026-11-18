@@ -88,7 +88,30 @@ async def update_test(test_id: uuid.UUID, payload: TestCreate, user: dict) -> di
     doc['updated_at'] = datetime.now(timezone.utc)
 
     await tests.replace_one({'_id': test_id}, doc)
+
+    # Файлы изображений, которые больше нигде не используются, удаляем сразу —
+    # хранилище ограничено. Считаем только id, оставшиеся в НОВОЙ версии теста.
+    await _cleanup_orphan_media(existing, doc)
     return doc
+
+
+def _collect_image_ids(doc: dict) -> set:
+    result: set = set()
+    for q in doc.get('questions', []):
+        for i in q.get('image_ids', []) or []:
+            result.add(i)
+    return result
+
+
+async def _cleanup_orphan_media(old_doc: dict, new_doc: dict) -> None:
+    """Удаляет картинки, которые были в тесте, но исчезли из новой версии."""
+    from services.media_service import delete_media_files
+
+    old_ids = _collect_image_ids(old_doc)
+    new_ids = _collect_image_ids(new_doc)
+    orphans = list(old_ids - new_ids)
+    if orphans:
+        await delete_media_files(orphans)
 
 
 async def list_user_tests(user: dict) -> list[TestSummary]:
@@ -134,6 +157,9 @@ async def delete_test(test_id: uuid.UUID, user: dict) -> None:
 
     # каскадно удаляем попытки (ПДн участников не остаются висеть)
     attempts_res = await db['attempts'].delete_many({'test_id': test_id})
+    # …и изображения вопросов (иначе занимают место впустую)
+    from services.media_service import delete_media_files
+    await delete_media_files(list(_collect_image_ids(existing)))
     await tests.delete_one({'_id': test_id})
 
     audit(
@@ -189,6 +215,7 @@ def test_to_public(doc: dict) -> TestPublic:
             answers=[AnswerPublic(id=str(a['id']), text=a['text']) for a in q.get('answers', [])],
             pairs_left=left,
             pairs_right=right,
+            image_urls=[f'/api/media/{i}' for i in q.get('image_ids', [])],
         ))
     return TestPublic(
         id=str(doc['_id']),

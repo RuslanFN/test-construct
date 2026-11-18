@@ -13,6 +13,7 @@ import OneCorrectComponent from './OneCorrect.vue';
 import SomeCorrectComponent from './SomeCorrect.vue';
 import MatchAnswersComponent from './MatchAnswers.vue';
 import TextAnswerComponent from './TextAnswer.vue';
+import ImageUploadComponent from './ImageUpload.vue';
 import { api } from '../api';
 
 const route = useRoute();
@@ -57,7 +58,7 @@ function addQuestionItem() {
     const id = nextLocalId();
     questions.value.push({
         id,
-        question: { questionId: id, type: currentSelected.value, text: '', required: false },
+        question: { questionId: id, type: currentSelected.value, text: '', required: false, imageIds: [] },
         answers: [],
     });
 }
@@ -79,6 +80,7 @@ function toBackendQuestion(item: QuestionItem) {
     const type = item.question.type;
     const required = !!item.question.required;
     const questionId = uid(typeof item.question.questionId === 'string' ? item.question.questionId : undefined);
+    const image_ids = [...(item.question.imageIds || [])];
 
     if (type === QuestionType.Match) {
         const pairs = (item.answers as MatchAnswers[]).map((a) => ({
@@ -86,7 +88,7 @@ function toBackendQuestion(item: QuestionItem) {
             left: a.text1,
             right: a.text2,
         }));
-        return { id: questionId, type: 'match', text: item.question.text, required, answers: [], pairs };
+        return { id: questionId, type: 'match', text: item.question.text, required, answers: [], pairs, image_ids };
     }
     const answers = (item.answers as any[]).map((a) => ({
         id: uid(a.uuid),
@@ -94,7 +96,7 @@ function toBackendQuestion(item: QuestionItem) {
         is_correct: type === QuestionType.Text ? true : !!a.isCorrect,
     }));
     const mapType = type === QuestionType.One ? 'one' : type === QuestionType.Some ? 'some' : 'text';
-    return { id: questionId, type: mapType, text: item.question.text, required, answers, pairs: [] };
+    return { id: questionId, type: mapType, text: item.question.text, required, answers, pairs: [], image_ids };
 }
 
 // ---- бэкенд -> фронтенд ----
@@ -102,12 +104,13 @@ function fromBackendQuestion(q: any): QuestionItem {
     const id = nextLocalId();
     const item: QuestionItem = {
         id,
-        question: {
+                question: {
             // сохраняем настоящий UUID вопроса, чтобы вернуть его при сохранении
             questionId: q.id,
             type: q.type as QuestionType,
             text: q.text ?? '',
             required: !!q.required,
+            imageIds: [...(q.image_ids || [])],
         },
         answers: [],
     };
@@ -243,9 +246,14 @@ watch(
                 <div v-else-if="questionItem.question.type === QuestionType.Match">
                     <MatchAnswersComponent :question="questionItem.question" :answers="(questionItem.answers as MatchAnswers[])" />
                 </div>
-                <div v-else-if="questionItem.question.type === QuestionType.Text">
+                                <div v-else-if="questionItem.question.type === QuestionType.Text">
                     <TextAnswerComponent :question="questionItem.question" :answers="(questionItem.answers as TextAnswers[])" />
                 </div>
+
+                <ImageUploadComponent
+                    v-if="questionItem.question.imageIds"
+                    :image-ids="questionItem.question.imageIds"
+                />
             </div>
 
             <div class="add-button-select">

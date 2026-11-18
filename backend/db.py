@@ -82,6 +82,7 @@ async def ensure_indexes() -> None:
     await get_db()['tests'].create_index('public_token', unique=True, sparse=True)
     await get_db()['attempts'].create_index('test_id')
     await get_db()['attempts'].create_index('user_id')
+    await get_db()['media'].create_index('uploaded_by')
 
 
 async def test_db() -> None:
