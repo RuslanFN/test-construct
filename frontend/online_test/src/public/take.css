@@ -51,7 +51,7 @@
   border-radius: 8px;
   outline: none;
 }
-.take-field input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.12); }
+.take-field input:focus { border-color: #1f6feb; box-shadow: 0 0 0 3px rgba(31,111,235,0.12); }
 @media (max-width: 560px) {
   .take-participant-grid { grid-template-columns: 1fr; }
 }
@@ -65,7 +65,7 @@
   box-shadow: 0 4px 6px -1px rgba(0,0,0,0.03);
 }
 .take-qtext { font-size: 16px; font-weight: 600; color: #0f172a; margin-bottom: 16px; }
-.take-qnum { color: #2563eb; }
+.take-qnum { color: #1f6feb; }
 
 /* Изображения к вопросу — карусель (стили в components/carousel.css) */
 .take-qimages {
@@ -88,7 +88,7 @@
   width: 100%; padding: 12px 16px; font-size: 14px;
   border: 1px solid #cbd5e1; border-radius: 8px; outline: none;
 }
-.take-text-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.12); }
+.take-text-input:focus { border-color: #1f6feb; box-shadow: 0 0 0 3px rgba(31,111,235,0.12); }
 
 .take-match { display: flex; flex-direction: column; gap: 10px; }
 .take-match-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: center; }
@@ -111,10 +111,10 @@
 }
 .take-submit button {
   padding: 12px 28px; font-size: 15px; font-weight: 600; color: #fff;
-  background: #2563eb; border: none; border-radius: 8px; cursor: pointer;
+  background: #fe7c2b; border: none; border-radius: 8px; cursor: pointer;
 }
-.take-submit button:hover { background: #1d4ed8; }
-.take-submit button:disabled { background: #93c5fd; cursor: not-allowed; }
+.take-submit button:hover { background: #e86a1c; }
+.take-submit button:disabled { background: #fcd0b3; cursor: not-allowed; }
 
 .take-error {
   padding: 12px 16px; color: #b91c1c; background: #fef2f2;
@@ -132,7 +132,7 @@
   display: flex; align-items: center; justify-content: center;
   font-size: 28px; font-weight: 700; border: 6px solid;
 }
-.score-pass { color: #047857; border-color: #10b981; background: #ecfdf5; }
+.score-pass { color: #047857; border-color: #00d455; background: rgba(0, 212, 85, 0.12); }
 .score-fail { color: #b91c1c; border-color: #ef4444; background: #fef2f2; }
 .score-text { font-size: 15px; color: #475569; margin-bottom: 20px; }
 .result-list { list-style: none; padding: 0; margin: 0 auto; max-width: 400px; text-align: left; }
@@ -148,7 +148,7 @@
   color: #64748b;
 }
 .take-match-pos {
-  color: #2563eb;
+  color: #1f6feb;
   font-weight: 600;
   margin-right: 4px;
 }
@@ -198,8 +198,8 @@
 
 /* Строка-цель при перетаскивании */
 .take-match-row--over .take-match-right {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
+  border-color: #1f6feb;
+  box-shadow: 0 0 0 3px rgba(31, 111, 235, 0.18);
 }
 .take-match-buttons {
   display: flex;
@@ -222,7 +222,7 @@
   cursor: pointer;
   transition: background-color 0.12s ease;
 }
-.take-arrow:hover:not(:disabled) { background: #eff6ff; border-color: #93c5fd; }
+.take-arrow:hover:not(:disabled) { background: rgba(31, 111, 235, 0.08); border-color: rgba(31, 111, 235, 0.4); }
 .take-arrow:disabled { opacity: 0.35; cursor: not-allowed; }
 
 @media (max-width: 560px) {

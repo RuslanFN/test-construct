@@ -290,15 +290,15 @@ watch(
         <div class="take-participant-grid">
           <label class="take-field">
             <span>Фамилия <span class="take-required">*</span></span>
-            <input type="text" v-model="participant.last_name" placeholder="Иванов" />
+            <input type="text" v-model="participant.last_name" maxlength="30" placeholder="Иванов" />
           </label>
           <label class="take-field">
             <span>Имя <span class="take-required">*</span></span>
-            <input type="text" v-model="participant.first_name" placeholder="Иван" />
+            <input type="text" v-model="participant.first_name" maxlength="30" placeholder="Иван" />
           </label>
           <label class="take-field">
             <span>Отчество</span>
-            <input type="text" v-model="participant.middle_name" placeholder="Иванович" />
+            <input type="text" v-model="participant.middle_name" maxlength="30" placeholder="Иванович" />
           </label>
           <label class="take-field">
 

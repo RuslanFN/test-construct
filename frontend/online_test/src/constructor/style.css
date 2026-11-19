@@ -83,8 +83,8 @@
 }
 
 .add-button-select select:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+  border-color: #1f6feb;
+  box-shadow: 0 0 0 3px rgba(31, 111, 235, 0.15);
 }
 
 /* Главная кнопка "Добавить" в самом низу */
@@ -96,7 +96,7 @@
   font-size: 14px;
   font-weight: 600;
   color: #ffffff;
-  background-color: #2563eb;
+  background-color: #fe7c2b;
   border: none;
   border-radius: 8px;
   cursor: pointer;
@@ -104,7 +104,7 @@
 }
 
 #add:hover {
-  background-color: #1d4ed8;
+  background-color: #e86a1c;
 }
 
 #add:active {
@@ -150,8 +150,8 @@
 }
 
 .question input[type="text"]:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+  border-color: #1f6feb;
+  box-shadow: 0 0 0 3px rgba(31, 111, 235, 0.12);
 }
 
 /* Многострочное поле текста вопроса */
@@ -172,8 +172,8 @@
 }
 
 .question textarea.question-textarea:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+  border-color: #1f6feb;
+  box-shadow: 0 0 0 3px rgba(31, 111, 235, 0.12);
 }
 
 /* Общая кнопка "добавить вариант ответа" внутри карточек вопросов */
@@ -183,17 +183,17 @@
   padding: 10px 20px;
   font-size: 13px;
   font-weight: 600;
-  color: #2563eb;
-  background-color: #eff6ff;
-  border: 1px solid #bfdbfe;
+  color: #1f6feb;
+  background-color: rgba(31, 111, 235, 0.08);
+  border: 1px solid rgba(31, 111, 235, 0.3);
   border-radius: 8px;
   cursor: pointer;
   transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
 #add-ans:hover {
-  background-color: #dbeafe;
-  border-color: #93c5fd;
+  background-color: rgba(31, 111, 235, 0.15);
+  border-color: rgba(31, 111, 235, 0.5);
 }
 
 /* --------------------------------------------------------------------------
@@ -246,8 +246,8 @@
 }
 
 .question input[type="radio"]:checked {
-  border-color: #2563eb;
-  background-color: #2563eb;
+  border-color: #fe7c2b;
+  background-color: #fe7c2b;
 }
 
 .question input[type="radio"]:checked::before {
@@ -280,8 +280,8 @@
 }
 
 input[type="checkbox"]:checked {
-  border-color: #10b981;
-  background-color: #10b981;
+  border-color: #00d455;
+  background-color: #00d455;
 }
 
 input[type="checkbox"]:checked::before {
@@ -356,13 +356,13 @@ input[type="checkbox"]:checked::before {
 /* Элемент, который сейчас перетаскивают */
 .match-ans-container.match-dragging {
   opacity: 0.45;
-  box-shadow: 0 0 0 1px #bfdbfe inset;
+  box-shadow: 0 0 0 1px rgba(31, 111, 235, 0.35) inset;
 }
 
 /* Место, куда «упадёт» элемент — подсвечиваем */
 .match-ans-container.match-drop-target {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
+  border-color: #1f6feb;
+  box-shadow: 0 0 0 3px rgba(31, 111, 235, 0.18);
 }
 
 /* --------------------------------------------------------------------------
@@ -425,8 +425,8 @@ input[type="checkbox"]:checked::before {
 }
 .test-title:focus,
 .test-desc:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+  border-color: #1f6feb;
+  box-shadow: 0 0 0 3px rgba(31, 111, 235, 0.12);
 }
 
 .question-required-row {
@@ -552,14 +552,14 @@ input[type="checkbox"]:checked::before {
   font-size: 15px;
   font-weight: 600;
   color: #ffffff;
-  background-color: #2563eb;
+  background-color: #fe7c2b;
   border: none;
   border-radius: 8px;
   cursor: pointer;
   transition: background-color 0.15s ease;
 }
-.constructor-actions button:hover { background-color: #1d4ed8; }
-.constructor-actions button:disabled { background-color: #93c5fd; cursor: not-allowed; }
+.constructor-actions button:hover { background-color: #e86a1c; }
+.constructor-actions button:disabled { background-color: #fcd0b3; cursor: not-allowed; }
 .constructor-actions button.secondary {
   color: #334155;
   background-color: #f1f5f9;
@@ -646,13 +646,13 @@ input[type="checkbox"]:checked::before {
   padding: 9px 18px;
   font-size: 13px;
   font-weight: 600;
-  color: #2563eb;
-  background-color: #eff6ff;
-  border: 1px solid #bfdbfe;
+  color: #1f6feb;
+  background-color: rgba(31, 111, 235, 0.08);
+  border: 1px solid rgba(31, 111, 235, 0.3);
   border-radius: 8px;
   cursor: pointer;
 }
-.img-add:hover { background-color: #dbeafe; border-color: #93c5fd; }
+.img-add:hover { background-color: rgba(31, 111, 235, 0.15); border-color: rgba(31, 111, 235, 0.5); }
 .img-add--busy { opacity: 0.6; cursor: progress; }
 
 /* Настоящий input скрыт: кликаем по label */

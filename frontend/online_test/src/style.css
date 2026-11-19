@@ -1,15 +1,48 @@
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
+  /* ===== Официальная брендовая палитра ===== */
+  --brand-orange: #fe7c2b;   /* основной акцент / primary CTA */
+  --brand-indigo: #552eff;   /* вторичный акцент */
+  --brand-green: #00d455;    /* успех */
+  --brand-blue: #1f6feb;     /* синий: ссылки, фокус, вторичные действия */
+  --brand-white: #ffffff;
+
+  /* Шкала для оранжевого (primary-кнопки) */
+  --brand-orange-hover: #e86a1c;
+  --brand-orange-soft: rgba(254, 124, 43, 0.12);
+  --brand-orange-border: rgba(254, 124, 43, 0.45);
+
+  /* Шкала для синего (ссылки, фокус, вторичные кнопки) */
+  --brand-blue-hover: #1a5fce;
+  --brand-blue-soft: rgba(31, 111, 235, 0.10);
+  --brand-blue-border: rgba(31, 111, 235, 0.35);
+  --brand-blue-ring: rgba(31, 111, 235, 0.18);
+
+  /* Шкала для индиго (акцентные метки/бейджи) */
+  --brand-indigo-hover: #4423d6;
+  --brand-indigo-soft: rgba(85, 46, 255, 0.10);
+  --brand-indigo-border: rgba(85, 46, 255, 0.35);
+
+  /* Шкала для зелёного (успех/публикация/экспорт) */
+  --brand-green-strong: #00b848;
+  --brand-green-soft: rgba(0, 212, 85, 0.14);
+  --brand-green-border: rgba(0, 212, 85, 0.4);
+
+  /* Нейтральные тона */
+  --text: #475569;
+  --text-h: #0f172a;
+  --text-muted: #64748b;
+  --bg: #f7f6fb;             /* брендовый светлый фон (закрывает «пустоту» в тёмной теме) */
+  --surface: #ffffff;        /* фон карточек */
+  --surface-soft: #f8fafc;   /* фон второстепенных блоков */
+  --border: #e2e8f0;
+  --border-strong: #cbd5e1;
+
+  --accent: var(--brand-blue);
+  --accent-bg: var(--brand-blue-soft);
+  --accent-border: var(--brand-blue-border);
+  --social-bg: rgba(31, 111, 235, 0.06);
   --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+    rgba(15, 23, 42, 0.08) 0 10px 15px -3px, rgba(15, 23, 42, 0.05) 0 4px 6px -2px;
 
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
   --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
@@ -17,7 +50,9 @@
 
   font: 18px/145% var(--sans);
   letter-spacing: 0.18px;
-  color-scheme: light dark;
+  /* Светлая тема зафиксирована: иначе в системной тёмной теме браузер
+     рисует тёмный фон, и наши стилизация выглядит «пустым» пятном. */
+  color-scheme: light;
   color: var(--text);
   background: var(--bg);
   font-synthesis: none;
@@ -30,28 +65,18 @@
   }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
-
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
-}
-
 body {
   margin: 0;
+  min-height: 100svh;
+  background: var(--bg);
+  color: var(--text);
+}
+
+a {
+  color: var(--brand-indigo);
+}
+a:hover {
+  color: var(--brand-indigo-hover);
 }
 
 h1,

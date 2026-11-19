@@ -7,7 +7,7 @@
 }
 .admin-page *, .admin-page *::before, .admin-page *::after { box-sizing: inherit; }
 
-.admin-title { font-size: 24px; color: #1e293b; margin: 0 0 20px; }
+.admin-title { font-size: 24px; color: #0f172a; margin: 0 0 20px; }
 
 .admin-tabs { display: flex; gap: 8px; margin-bottom: 18px; }
 .admin-tabs button {
@@ -20,7 +20,7 @@
   border-radius: 8px;
   cursor: pointer;
 }
-.admin-tabs button.active { color: #fff; background: #2563eb; border-color: #2563eb; }
+.admin-tabs button.active { color: #fff; background: #fe7c2b; border-color: #fe7c2b; }
 
 .admin-section { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 20px; }
 
@@ -29,7 +29,7 @@
   flex: 1; min-width: 200px; padding: 10px 14px; font-size: 14px;
   border: 1px solid #cbd5e1; border-radius: 8px; outline: none;
 }
-.admin-search:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.12); }
+.admin-search:focus { border-color: #1f6feb; box-shadow: 0 0 0 3px rgba(31,111,235,0.12); }
 .admin-select {
   padding: 10px 14px; font-size: 14px; border: 1px solid #cbd5e1;
   border-radius: 8px; background: #fff; cursor: pointer;
@@ -52,17 +52,17 @@
 
 .link-btn {
   background: none; border: none; padding: 2px 8px; font-size: 13px;
-  color: #2563eb; cursor: pointer;
+  color: #1f6feb; cursor: pointer;
 }
 .link-btn:hover { text-decoration: underline; }
 .link-btn.danger { color: #dc2626; }
 
 .badge { padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
-.badge-pub { background: #ecfdf5; color: #047857; }
-.badge-draft { background: #fffbeb; color: #b45309; }
-.badge-pending { background: #eff6ff; color: #1d4ed8; }
+.badge-pub { background: rgba(0, 212, 85, 0.15); color: #047857; }
+.badge-draft { background: rgba(254, 124, 43, 0.15); color: #c2570a; }
+.badge-pending { background: rgba(85, 46, 255, 0.1); color: #4423d6; }
 .badge-rejected { background: #fef2f2; color: #b91c1c; }
-.badge-service { background: #eef2ff; color: #4338ca; margin-left: 6px; }
+.badge-service { background: rgba(85, 46, 255, 0.12); color: #552eff; margin-left: 6px; }
 
 .admin-error { color: #b91c1c; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 10px 14px; }
 .admin-empty { color: #64748b; text-align: center; padding: 24px; }

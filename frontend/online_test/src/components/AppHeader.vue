@@ -46,8 +46,13 @@ async function doLogout() {
   top: 0;
   z-index: 100;
   background: #ffffff;
-  border-bottom: 1px solid #e2e8f0;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+}
+.app-header::after {
+  content: '';
+  display: block;
+  height: 3px;
+  background: linear-gradient(90deg, #fe7c2b 0%, #1f6feb 55%, #552eff 100%);
 }
 .app-header-inner {
   max-width: 900px;
@@ -61,7 +66,7 @@ async function doLogout() {
 .brand {
   font-size: 18px;
   font-weight: 700;
-  color: #1e293b;
+  color: #fe7c2b;
   cursor: pointer;
   user-select: none;
 }
@@ -80,13 +85,14 @@ async function doLogout() {
   font-size: 14px;
   font-weight: 600;
   color: #fff;
-  background: #2563eb;
+  background: #fe7c2b;
   border: none;
   border-radius: 8px;
   cursor: pointer;
   text-decoration: none;
+  transition: background-color 0.15s ease;
 }
-.new-test-btn:hover { background: #1d4ed8; }
+.new-test-btn:hover { background: #e86a1c; }
 .logout-btn {
   padding: 8px 16px;
   font-size: 14px;
@@ -113,11 +119,12 @@ async function doLogout() {
   padding: 8px 14px;
   font-size: 14px;
   font-weight: 600;
-  color: #334155;
-  background: #f1f5f9;
-  border: 1px solid #e2e8f0;
+  color: #1f6feb;
+  background: rgba(31, 111, 235, 0.08);
+  border: 1px solid rgba(31, 111, 235, 0.3);
   border-radius: 8px;
   text-decoration: none;
+  transition: background-color 0.15s ease;
 }
-.admin-link:hover { background: #e2e8f0; }
+.admin-link:hover { background: rgba(31, 111, 235, 0.15); }
 </style>

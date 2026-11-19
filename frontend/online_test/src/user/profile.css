@@ -133,8 +133,8 @@
   border-radius: 999px;
   white-space: nowrap;
 }
-.status--published { color: #047857; background-color: #ecfdf5; }
-.status--draft     { color: #b45309; background-color: #fffbeb; }
+.status--published { color: #047857; background-color: rgba(0, 212, 85, 0.15); }
+.status--draft     { color: #c2570a; background-color: rgba(254, 124, 43, 0.15); }
 
 /* --------------------------------------------------------------------------
    3. КНОПКИ ДЕЙСТВИЙ
@@ -155,9 +155,9 @@
   font-size: 13px;
   font-weight: 500;
   line-height: 1.2;
-  color: #2563eb;
-  background-color: #eff6ff;
-  border: 1px solid #bfdbfe;
+  color: #1f6feb;
+  background-color: rgba(31, 111, 235, 0.08);
+  border: 1px solid rgba(31, 111, 235, 0.3);
   border-radius: 8px;
   cursor: pointer;
   white-space: nowrap;
@@ -165,9 +165,9 @@
 }
 
 .tests-table tbody td:last-child button:hover {
-  background-color: #dbeafe;
-  border-color: #93c5fd;
-  color: #1d4ed8;
+  background-color: rgba(31, 111, 235, 0.15);
+  border-color: rgba(31, 111, 235, 0.5);
+  color: #1a5fce;
 }
 
 .tests-table tbody td:last-child button:active {
@@ -176,7 +176,7 @@
 
 .tests-table tbody td:last-child button:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+  box-shadow: 0 0 0 3px rgba(31, 111, 235, 0.25);
 }
 
 /* Недоступное действие (например, «редактировать» для опубликованного теста) */

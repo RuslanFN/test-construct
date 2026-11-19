@@ -18,6 +18,8 @@ class ParticipantIn(BaseModel):
         v = (v or '').strip()
         if not v:
             raise ValueError('Поле обязательно для заполнения')
+        if len(v) > 30:
+            raise ValueError('Значение слишком длинное (максимум 30 символов)')
         return v
 
     @field_validator('middle_name')
@@ -26,6 +28,8 @@ class ParticipantIn(BaseModel):
         if v is None:
             return None
         v = v.strip()
+        if len(v) > 30:
+            raise ValueError('Значение слишком длинное (максимум 30 символов)')
         return v or None
 
     @field_validator('certificate_number')
@@ -121,5 +125,4 @@ class AttemptDetail(BaseModel):
     percent: float
     created_at: datetime
     questions: list[QuestionDetail] = Field(default_factory=list)
-
 
