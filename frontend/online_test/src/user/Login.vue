@@ -72,22 +72,22 @@ async function submit() {
             <h1>{{ mode === 'login' ? 'Войти' : 'Регистрация' }}</h1>
             <div class="login-field">
                 <label for="username">имя пользователя</label>
-                <input id="username" v-model="form.username" type="text" name="username"
+                <input id="username" v-model="form.username" type="text" name="username" maxlength="30"
                        placeholder="Введите имя пользователя" required />
             </div>
             <template v-if="mode === 'register'">
                 <div class="login-field">
                     <label for="email">почта</label>
-                    <input id="email" v-model="form.email" type="email" name="email"
+                    <input id="email" v-model="form.email" type="email" name="email" maxlength="50"
                            placeholder="you@mail.ru" required />
                 </div>
                 <div class="login-field">
                     <label for="first_name">имя</label>
-                    <input id="first_name" v-model="form.first_name" type="text" name="first_name" required />
+                    <input id="first_name" v-model="form.first_name" type="text" name="first_name" maxlength="30" required />
                 </div>
                 <div class="login-field">
                     <label for="last_name">фамилия</label>
-                    <input id="last_name" v-model="form.last_name" type="text" name="last_name" required />
+                    <input id="last_name" v-model="form.last_name" type="text" name="last_name" maxlength="30" required />
                 </div>
 </template>
                         <div class="password-field">
@@ -115,6 +115,7 @@ async function submit() {
                 {{ mode === 'login' ? 'Нет аккаунта? Зарегистрироваться' : 'Уже есть аккаунт? Войти' }}
             </button>
         </form>
-    </div>
+        </div>
 </template>
+
 

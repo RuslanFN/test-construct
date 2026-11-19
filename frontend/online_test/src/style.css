@@ -319,3 +319,52 @@ code {
     border-right-color: var(--border);
   }
 }
+
+/* ==========================================================================
+   Пагинация таблиц (общая для всех таблиц приложения)
+   ========================================================================== */
+.pagination {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 12px 16px;
+  justify-content: center;
+}
+.pagination-btn {
+  min-width: 34px;
+  height: 34px;
+  padding: 0 10px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--brand-blue);
+  background: var(--surface);
+  border: 1px solid var(--brand-blue-border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.pagination-btn:hover:not(:disabled):not(.pagination-btn--active) {
+  background: var(--brand-blue-soft);
+  border-color: var(--brand-blue);
+}
+.pagination-btn--active {
+  color: #fff;
+  background: var(--brand-blue);
+  border-color: var(--brand-blue);
+  cursor: default;
+}
+.pagination-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.pagination-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--brand-blue-ring);
+}
+.pagination-info {
+  margin-left: 6px;
+  font-size: 13px;
+  color: var(--text-muted);
+}

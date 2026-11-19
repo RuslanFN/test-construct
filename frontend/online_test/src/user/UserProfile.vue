@@ -1,9 +1,10 @@
 <style lang="css" src="./profile.css" />
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { api } from '../api';
 import { authState } from '../auth';
+import Pagination from '../components/Pagination.vue';
 
 const router = useRouter();
 
@@ -12,6 +13,17 @@ const loading = ref(false);
 const error = ref('');
 
 const user = authState.user;
+
+// Пагинация таблицы тестов
+const page = ref(1);
+const pageSize = 10;
+const pageCount = computed(() => Math.max(1, Math.ceil(tests.value.length / pageSize)));
+const pagedTests = computed(() => {
+  const start = (page.value - 1) * pageSize;
+  return tests.value.slice(start, start + pageSize);
+});
+// если после обновления/удаления текущая страница стала пустой — вернёмся назад
+watch(pageCount, (c) => { if (page.value > c) page.value = c; });
 
 function publicLink(token) {
   return `${window.location.origin}/#/take/${token}`;
@@ -111,9 +123,8 @@ defineExpose({ loadTests });
                 <tr v-if="loading">
                     <td colspan="3" class="empty-row">Загрузка…</td>
                 </tr>
-                <tr v-for="test in tests" :key="test.id">
+                <tr v-for="test in pagedTests" :key="test.id">
                     <td>{{ test.title }} <span class="qcount">({{ test.questions_count }} вопр.)</span></td>
-
 
 
 
@@ -143,6 +154,7 @@ defineExpose({ loadTests });
                 </tr>
             </tbody>
         </table>
+        <Pagination v-model:page="page" :total="tests.length" :page-size="pageSize" />
     </div>
   </div>
 </template>

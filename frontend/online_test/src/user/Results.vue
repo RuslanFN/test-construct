@@ -1,7 +1,8 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { api } from '../api';
+import Pagination from '../components/Pagination.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -14,6 +15,17 @@ const error = ref('');
 const details = ref({});
 const expanded = ref(null); // какой attemptId раскрыт
 const exporting = ref(false);
+
+// Пагинация таблицы попыток
+const page = ref(1);
+const pageSize = 10;
+const attempts = computed(() => data.value?.attempts || []);
+const pageCount = computed(() => Math.max(1, Math.ceil(attempts.value.length / pageSize)));
+const pagedAttempts = computed(() => {
+  const start = (page.value - 1) * pageSize;
+  return attempts.value.slice(start, start + pageSize);
+});
+watch(pageCount, (c) => { if (page.value > c) page.value = c; });
 
 async function exportCsv() {
   exporting.value = true;
@@ -89,6 +101,7 @@ watch(
     data.value = null;
     details.value = {};
     expanded.value = null;
+    page.value = 1;
     load();
   },
 );
@@ -141,7 +154,7 @@ watch(
             </tr>
           </thead>
           <tbody>
-            <template v-for="a in data.attempts" :key="a.id">
+            <template v-for="a in pagedAttempts" :key="a.id">
               <tr class="clickable-row" @click="toggle(a.id)">
                 <td class="caret">{{ expanded === a.id ? '▾' : '▸' }}</td>
                 <td>{{ nameOf(a) }}</td>
@@ -187,11 +200,12 @@ watch(
                 </td>
               </tr>
             </template>
-            <tr v-if="data.attempts.length === 0">
+            <tr v-if="attempts.length === 0">
               <td colspan="5" class="empty-row">Пока никто не проходил этот тест</td>
             </tr>
           </tbody>
         </table>
+        <Pagination v-model:page="page" :total="attempts.length" :page-size="pageSize" />
       </div>
     </template>
   </div>

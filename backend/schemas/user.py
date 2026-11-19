@@ -28,7 +28,10 @@ class UserCreate(BaseModel):
         # Проверяем формат почты сами, чтобы сообщение было на русском
         if not isinstance(v, str) or not _EMAIL_RE.fullmatch(v.strip()):
             raise ValueError('Некорректный формат электронной почты')
-        return v.strip()
+        v = v.strip()
+        if len(v) > 50:
+            raise ValueError('Электронная почта слишком длинная (максимум 50 символов)')
+        return v
 
     @field_validator('username')
     @classmethod
@@ -36,6 +39,8 @@ class UserCreate(BaseModel):
         v = (v or '').strip()
         if len(v) < 3:
             raise ValueError('Логин должен содержать минимум 3 символа')
+        if len(v) > 30:
+            raise ValueError('Логин слишком длинный (максимум 30 символов)')
         if not re.fullmatch(r'[A-Za-z0-9_.-]+', v):
             raise ValueError('Логин может содержать только латинские буквы, цифры и символы _ . -')
         return v
@@ -53,7 +58,19 @@ class UserCreate(BaseModel):
         v = (v or '').strip()
         if not v:
             raise ValueError('Поле обязательно для заполнения')
+        if len(v) > 30:
+            raise ValueError('Значение слишком длинное (максимум 30 символов)')
         return v
+
+    @field_validator('middle_name')
+    @classmethod
+    def middle_name_len(cls, v: str | None) -> str | None:
+        if v is None:
+            return None
+        v = v.strip()
+        if len(v) > 30:
+            raise ValueError('Значение слишком длинное (максимум 30 символов)')
+        return v or None
 
     @field_validator('pd_consent')
     @classmethod

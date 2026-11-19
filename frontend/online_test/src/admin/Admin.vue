@@ -1,7 +1,8 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { api } from '../api';
+import Pagination from '../components/Pagination.vue';
 
 const router = useRouter();
 
@@ -13,6 +14,16 @@ const loadingTests = ref(false);
 const testsError = ref('');
 const query = ref('');
 const statusFilter = ref('');
+
+// Пагинация таблицы тестов
+const testsPage = ref(1);
+const pageSize = 10;
+const testsPageCount = computed(() => Math.max(1, Math.ceil(tests.value.length / pageSize)));
+const pagedTests = computed(() => {
+  const start = (testsPage.value - 1) * pageSize;
+  return tests.value.slice(start, start + pageSize);
+});
+watch(testsPageCount, (c) => { if (testsPage.value > c) testsPage.value = c; });
 
 async function loadTests() {
   loadingTests.value = true;
@@ -56,6 +67,15 @@ async function deleteTest(t) {
 const users = ref([]);
 const loadingUsers = ref(false);
 const usersError = ref('');
+
+// Пагинация таблицы пользователей
+const usersPage = ref(1);
+const usersPageCount = computed(() => Math.max(1, Math.ceil(users.value.length / pageSize)));
+const pagedUsers = computed(() => {
+  const start = (usersPage.value - 1) * pageSize;
+  return users.value.slice(start, start + pageSize);
+});
+watch(usersPageCount, (c) => { if (usersPage.value > c) usersPage.value = c; });
 
 async function loadUsers() {
   loadingUsers.value = true;
@@ -177,7 +197,7 @@ onMounted(() => {
           </tr>
         </thead>
         <tbody>
-          <tr v-for="t in tests" :key="t.id">
+          <tr v-for="t in pagedTests" :key="t.id">
             <td class="cell-title">{{ t.title }}</td>
             <td>{{ t.author_username || '—' }}</td>
             <td>
@@ -199,6 +219,7 @@ onMounted(() => {
         </tbody>
       </table>
       <p v-else-if="!loadingTests" class="admin-empty">Тесты не найдены</p>
+      <Pagination v-model:page="testsPage" :total="tests.length" :page-size="pageSize" />
     </section>
 
     <!-- ===== ПОЛЬЗОВАТЕЛИ ===== -->
@@ -223,7 +244,7 @@ onMounted(() => {
           </tr>
         </thead>
         <tbody>
-          <tr v-for="u in users" :key="u.id">
+          <tr v-for="u in pagedUsers" :key="u.id">
             <td>{{ u.username }} <span v-if="u.is_service" class="badge badge-service">служебная</span></td>
             <td>{{ [u.last_name, u.first_name, u.middle_name].filter(Boolean).join(' ') || '—' }}</td>
             <td>{{ u.email || '—' }}</td>
@@ -253,6 +274,7 @@ onMounted(() => {
         </tbody>
       </table>
       <p v-else-if="!loadingUsers" class="admin-empty">Нет пользователей</p>
+      <Pagination v-model:page="usersPage" :total="users.length" :page-size="pageSize" />
     </section>
   </div>
 </template>
