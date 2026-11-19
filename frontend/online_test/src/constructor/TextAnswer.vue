@@ -14,8 +14,8 @@ if (props.answers.length === 0) {
 <template>
     <div class="question">
         <div class="question-text-container">
-            <label for="quetion-text"> Введите текст вопроса:</label>
-            <input type="text" id="question-text" name="question-text" v-model="props.question.text" />
+            <label for="question-text"> Введите текст вопроса:</label>
+            <textarea id="question-text" name="question-text" rows="3" class="question-textarea" v-model="props.question.text"></textarea>
         </div>
         <div class="text-ans-container">
             <label for="answer"> Правильный ответ</label>
@@ -23,3 +23,4 @@ if (props.answers.length === 0) {
         </div>
     </div>
 </template>
+

@@ -25,8 +25,8 @@ function removeAnswer(id: number) {
 <template>
     <div class="question">
         <div class="question-text-container">
-            <label for="quetion-text"> Введите текст вопроса:</label>
-            <input type="text" id="question-text" name="question-text" v-model="props.question.text" />
+                        <label for="question-text"> Введите текст вопроса:</label>
+            <textarea id="question-text" name="question-text" rows="3" class="question-textarea" v-model="props.question.text"></textarea>
         </div>
         <div class="one-correct-ans-container" v-for="answer in answers" :key="answer.id">
             <label for="answer"> Ответ</label>

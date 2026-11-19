@@ -154,6 +154,28 @@
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
 }
 
+/* Многострочное поле текста вопроса */
+.question textarea.question-textarea {
+  width: 100%;
+  min-height: 72px;
+  padding: 12px 16px;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #0f172a;
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  outline: none;
+  resize: vertical;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.question textarea.question-textarea:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+}
+
 /* Общая кнопка "добавить вариант ответа" внутри карточек вопросов */
 #add-ans {
   align-self: flex-start;
@@ -285,7 +307,7 @@ input[type="checkbox"]:checked::before {
 /* Контейнер строки парных сопоставлений */
 .match-ans-container {
   display: grid;
-  grid-template-columns: auto 1fr auto 1fr; /* Ровная сетка: Label, Input, Label, Input */
+  grid-template-columns: auto auto 1fr auto 1fr auto; /* handle, Label, Input, Label, Input, remove */
   align-items: center;
   gap: 16px;
   background-color: #f8fafc;
@@ -293,6 +315,7 @@ input[type="checkbox"]:checked::before {
   border: 1px solid #e2e8f0;
   border-radius: 10px;
   width: 100%;
+  transition: box-shadow 0.15s ease, opacity 0.15s ease, border-color 0.15s ease;
 }
 
 .match-ans-container label {
@@ -300,6 +323,46 @@ input[type="checkbox"]:checked::before {
   color: #64748b;
   font-weight: 500;
   white-space: nowrap;
+}
+
+/* Маркер перетаскивания пары */
+.match-drag-handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 32px;
+  font-size: 18px;
+  line-height: 1;
+  color: #94a3b8;
+  cursor: grab;
+  user-select: none;
+  border-radius: 6px;
+}
+.match-drag-handle:hover { color: #475569; background-color: #eef2f7; }
+.match-drag-handle:active { cursor: grabbing; }
+
+/* Подсказка над списком пар */
+.match-drag-hint {
+  margin: 0;
+  font-size: 12px;
+  color: #94a3b8;
+}
+.match-drag-handle-hint {
+  font-size: 15px;
+  color: #64748b;
+}
+
+/* Элемент, который сейчас перетаскивают */
+.match-ans-container.match-dragging {
+  opacity: 0.45;
+  box-shadow: 0 0 0 1px #bfdbfe inset;
+}
+
+/* Место, куда «упадёт» элемент — подсвечиваем */
+.match-ans-container.match-drop-target {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
 }
 
 /* --------------------------------------------------------------------------
@@ -314,9 +377,20 @@ input[type="checkbox"]:checked::before {
   .add-button-select select, #add {
     width: 100%;
   }
-  .match-ans-container {
-    grid-template-columns: 1fr; /* Схлопываем сопоставления в один столбец */
+    .match-ans-container {
+    grid-template-columns: auto 1fr; /* маркер + контент в один столбец */
     gap: 8px;
+  }
+  .match-ans-container label {
+    grid-column: 2;
+  }
+  .match-ans-container input[type="text"],
+  .match-ans-container .remove-ans {
+    grid-column: 2;
+  }
+  .match-drag-handle {
+    grid-row: 1 / span 5;
+    align-self: center;
   }
 }
 

@@ -66,6 +66,53 @@ function moveMatch(q, pos, dir) {
   syncMatches(q);
 }
 
+// Перетаскивание правого варианта (определение 2): переносим значение с позиции
+// `from` на позицию `to`, остальные сдвигаются.
+function moveMatchTo(q, from, to) {
+  const order = ensureOrder(q);
+  if (from === to || from < 0 || to < 0 || from >= order.length || to >= order.length) return;
+  const moved = order.splice(from, 1)[0];
+  order.splice(to, 0, moved);
+  syncMatches(q);
+}
+
+// Индекс перетаскиваемого правого варианта и позиция под курсором (для подсветки).
+const dragFrom = ref(null);
+const dragOver = ref(null);
+
+function onMatchDragStart(event, q, from) {
+  dragFrom.value = from;
+  event.dataTransfer?.setData('text/plain', String(from));
+  if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
+}
+
+function onMatchDragOver(event, to) {
+  event.preventDefault();
+  if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+  dragOver.value = to;
+}
+
+function onMatchDragLeave(to) {
+  if (dragOver.value === to) dragOver.value = null;
+}
+
+function onMatchDrop(event, q, to) {
+  event.preventDefault();
+  const from = dragFrom.value;
+  resetMatchDrag();
+  if (from === null) return;
+  moveMatchTo(q, from, to);
+}
+
+function onMatchDragEnd() {
+  resetMatchDrag();
+}
+
+function resetMatchDrag() {
+  dragFrom.value = null;
+  dragOver.value = null;
+}
+
 function shuffleMatch(q) {
   const order = ensureOrder(q);
   // перемешиваем (Фишер–Йетс)
@@ -283,18 +330,41 @@ watch(
                  @input="setText(q, $event.target.value)" />
         </div>
 
-        <!-- сопоставление (перестановка стрелками) -->
+        <!-- сопоставление (перестановка перетаскиванием или стрелками) -->
         <div v-else-if="q.type === 'match'" class="take-match">
           <p class="take-match-hint">
-            Расставьте правые значения в правильном порядке кнопками ▲ ▼
+            Перетащите правые значения мышкой в нужном порядке (или используйте кнопки ▲ ▼)
           </p>
-          <div class="take-match-row" v-for="(left, pos) in q.pairs_left" :key="pos">
+          <div
+            class="take-match-row"
+            v-for="(left, pos) in q.pairs_left"
+            :key="pos"
+            :class="{ 'take-match-row--over': dragOver === pos && dragFrom !== pos }"
+            @dragover="onMatchDragOver($event, pos)"
+            @dragleave="onMatchDragLeave(pos)"
+            @drop="onMatchDrop($event, q, pos)"
+          >
             <div class="take-match-left">
               <span class="take-match-pos">{{ pos + 1 }}.</span>
               {{ left }}
             </div>
             <div class="take-match-right">
-              <span class="take-match-value">{{ q.pairs_right[matchOrder[q.id][pos]] }}</span>
+              <span
+                class="take-match-handle"
+                :class="{ 'take-match-handle--dragging': dragFrom === pos }"
+                draggable="true"
+                title="Перетащить"
+                aria-label="Перетащить значение"
+                @dragstart="onMatchDragStart($event, q, pos)"
+                @dragend="onMatchDragEnd"
+              >⠿</span>
+              <span
+                class="take-match-value"
+                :class="{ 'take-match-value--dragging': dragFrom === pos }"
+                draggable="true"
+                @dragstart="onMatchDragStart($event, q, pos)"
+                @dragend="onMatchDragEnd"
+              >{{ q.pairs_right[matchOrder[q.id][pos]] }}</span>
               <div class="take-match-buttons">
                 <button type="button" class="take-arrow" :disabled="pos === 0"
                         title="Выше" @click="moveMatch(q, pos, -1)">▲</button>

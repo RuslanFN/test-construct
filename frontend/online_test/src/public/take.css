@@ -163,10 +163,43 @@
   border-radius: 8px;
   min-height: 46px;
 }
+/* Маркер перетаскивания (ручка) */
+.take-match-handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 22px;
+  font-size: 18px;
+  line-height: 1;
+  color: #94a3b8;
+  cursor: grab;
+  user-select: none;
+  border-radius: 6px;
+  transition: color 0.12s ease, background-color 0.12s ease;
+}
+.take-match-handle:hover { color: #475569; background: #eef2f7; }
+.take-match-handle:active { cursor: grabbing; }
+.take-match-handle--dragging { opacity: 0.4; }
+
 .take-match-value {
   font-size: 14px;
   color: #334155;
   word-break: break-word;
+  flex: 1;
+  cursor: grab;
+  padding: 2px 4px;
+  border-radius: 6px;
+  transition: background-color 0.12s ease, opacity 0.12s ease;
+}
+.take-match-value:hover { background: #eef2f7; }
+.take-match-value:active { cursor: grabbing; }
+.take-match-value--dragging { opacity: 0.4; }
+
+/* Строка-цель при перетаскивании */
+.take-match-row--over .take-match-right {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
 }
 .take-match-buttons {
   display: flex;
