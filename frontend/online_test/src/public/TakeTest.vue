@@ -76,29 +76,38 @@ function moveMatchTo(q, from, to) {
   syncMatches(q);
 }
 
-// Индекс перетаскиваемого правого варианта и позиция под курсором (для подсветки).
-const dragFrom = ref(null);
-const dragOver = ref(null);
+// Состояние перетаскивания привязано к конкретному вопросу (qid), иначе при
+// нескольких вопросах-сопоставлениях подсветка срабатывала бы на всех сразу.
+const dragFrom = ref(null);   // { qid, pos }
+const dragOver = ref(null);   // { qid, pos }
 
 function onMatchDragStart(event, q, from) {
-  dragFrom.value = from;
+  dragFrom.value = { qid: q.id, pos: from };
   event.dataTransfer?.setData('text/plain', String(from));
   if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
 }
 
-function onMatchDragOver(event, to) {
+function onMatchDragOver(event, q, to) {
   event.preventDefault();
   if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
-  dragOver.value = to;
+  // Подсвечиваем только тот же вопрос и не ту же позицию, что тащим.
+  if (!dragFrom.value || dragFrom.value.qid !== q.id) return;
+  if (dragFrom.value.pos === to) {
+    dragOver.value = null;
+    return;
+  }
+  dragOver.value = { qid: q.id, pos: to };
 }
 
-function onMatchDragLeave(to) {
-  if (dragOver.value === to) dragOver.value = null;
+function onMatchDragLeave(q, to) {
+  if (dragOver.value && dragOver.value.qid === q.id && dragOver.value.pos === to) {
+    dragOver.value = null;
+  }
 }
 
 function onMatchDrop(event, q, to) {
   event.preventDefault();
-  const from = dragFrom.value;
+  const from = dragFrom.value && dragFrom.value.qid === q.id ? dragFrom.value.pos : null;
   resetMatchDrag();
   if (from === null) return;
   moveMatchTo(q, from, to);
@@ -111,6 +120,15 @@ function onMatchDragEnd() {
 function resetMatchDrag() {
   dragFrom.value = null;
   dragOver.value = null;
+}
+
+// Помощники для шаблона: состояние применяется строго к нужному вопросу/позиции.
+function isDragging(q, pos) {
+  return !!dragFrom.value && dragFrom.value.qid === q.id && dragFrom.value.pos === pos;
+}
+
+function isDropTarget(q, pos) {
+  return !!dragOver.value && dragOver.value.qid === q.id && dragOver.value.pos === pos;
 }
 
 function shuffleMatch(q) {
@@ -339,9 +357,9 @@ watch(
             class="take-match-row"
             v-for="(left, pos) in q.pairs_left"
             :key="pos"
-            :class="{ 'take-match-row--over': dragOver === pos && dragFrom !== pos }"
-            @dragover="onMatchDragOver($event, pos)"
-            @dragleave="onMatchDragLeave(pos)"
+            :class="{ 'take-match-row--over': isDropTarget(q, pos) }"
+            @dragover="onMatchDragOver($event, q, pos)"
+            @dragleave="onMatchDragLeave(q, pos)"
             @drop="onMatchDrop($event, q, pos)"
           >
             <div class="take-match-left">
@@ -351,7 +369,7 @@ watch(
             <div class="take-match-right">
               <span
                 class="take-match-handle"
-                :class="{ 'take-match-handle--dragging': dragFrom === pos }"
+                :class="{ 'take-match-handle--dragging': isDragging(q, pos) }"
                 draggable="true"
                 title="Перетащить"
                 aria-label="Перетащить значение"
@@ -360,7 +378,7 @@ watch(
               >⠿</span>
               <span
                 class="take-match-value"
-                :class="{ 'take-match-value--dragging': dragFrom === pos }"
+                :class="{ 'take-match-value--dragging': isDragging(q, pos) }"
                 draggable="true"
                 @dragstart="onMatchDragStart($event, q, pos)"
                 @dragend="onMatchDragEnd"
