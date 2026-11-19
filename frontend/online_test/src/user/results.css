@@ -108,11 +108,17 @@
   padding: 14px 16px;
   color: #1e293b;
   border-bottom: 1px solid #f1f5f9;
-  /* Длинные имена/номера не должны ломать вёрстку: переносим по словам
-     и при необходимости посимвольно. */
-  overflow-wrap: anywhere;
-  word-break: break-word;
   vertical-align: top;
+}
+/* Колонка «Кто прошёл»: длинные имена/номера обрезаем одной строкой с
+   многоточием, полное значение — во всплывающей подсказке (title).
+   max-width: 0 в table-layout: fixed заставляет ellipsis работать
+   независимо от содержимого и не даёт ячейке растягиваться. */
+.results-table tbody td.cell-name {
+  max-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .results-table tbody tr:hover { background: #f8fafc; }
 

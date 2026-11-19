@@ -157,7 +157,7 @@ watch(
             <template v-for="a in pagedAttempts" :key="a.id">
               <tr class="clickable-row" @click="toggle(a.id)">
                 <td class="caret">{{ expanded === a.id ? '▾' : '▸' }}</td>
-                <td>{{ nameOf(a) }}</td>
+                <td class="cell-name" :title="nameOf(a)">{{ nameOf(a) }}</td>
                 <td>{{ a.score }} / {{ a.total }}</td>
                 <td>
                   <span class="pct" :class="a.percent >= 60 ? 'pct-pass' : 'pct-fail'">{{ a.percent }}%</span>
