@@ -34,6 +34,10 @@ async function request(path, options = {}) {
     const err = new Error(_extractErrorMessage(data, res.status));
     err.status = res.status;
     err.data = data;
+    // Для 429 сервер присылает Retry-After (сек) — клиент может показать
+    // таймер и разблокировать кнопку точно к моменту снятия лимита.
+    const retryAfter = Number(res.headers.get('Retry-After'));
+    if (Number.isFinite(retryAfter) && retryAfter > 0) err.retryAfter = retryAfter;
     throw err;
   }
 

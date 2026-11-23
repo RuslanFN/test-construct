@@ -9,7 +9,7 @@ from uvicorn import run
 import config  # noqa: F401  (настраивает логирование)
 import db
 import seed
-from routers import auth_router, public_router, tests_router, admin_router, media_router
+from routers import auth_router, public_router, tests_router, admin_router, media_router, debug_router
 
 
 # Перевод типовых сообщений валидации Pydantic на русский
@@ -68,6 +68,7 @@ app.include_router(tests_router)
 app.include_router(public_router)
 app.include_router(admin_router)
 app.include_router(media_router)
+app.include_router(debug_router)
 
 
 @app.get('/api/health')

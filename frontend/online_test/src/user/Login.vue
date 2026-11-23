@@ -1,6 +1,6 @@
 <style lang="css" src="./login.css" />
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { login, register } from '../auth';
 
@@ -19,6 +19,24 @@ const pdConsent = ref(false);
 const error = ref('');
 const success = ref('');
 const loading = ref(false);
+// Мягкая защита на клиенте: после 429 (лимит на сервере) кнопка недоступна
+// ещё несколько секунд — заодно отсекает двойные клики и наивные скрипты.
+const cooldown = ref(0);
+let cooldownTimer = null;
+
+const buttonDisabled = computed(() => loading.value || cooldown.value > 0);
+
+function startCooldown(seconds) {
+  cooldown.value = Math.max(1, Math.ceil(seconds || 0));
+  if (cooldownTimer) clearInterval(cooldownTimer);
+  cooldownTimer = setInterval(() => {
+    cooldown.value -= 1;
+    if (cooldown.value <= 0) {
+      clearInterval(cooldownTimer);
+      cooldownTimer = null;
+    }
+  }, 1000);
+}
 
 async function submit() {
   error.value = '';
@@ -35,10 +53,10 @@ async function submit() {
     if (!form.value.username.trim() || !form.value.email.trim()
         || !form.value.first_name.trim() || !form.value.last_name.trim()) {
       error.value = 'Заполните все обязательные поля';
-      return;
+            return;
     }
   }
-    loading.value = true;
+  loading.value = true;
   try {
     if (mode.value === 'login') {
       await login(form.value.username, form.value.password);
@@ -55,11 +73,16 @@ async function submit() {
       });
       // Регистрация больше не логинит: показываем сообщение об ожидании подтверждения
       success.value = res?.message || 'Заявка на регистрацию отправлена. Дождитесь подтверждения администратором.';
-      mode.value = 'login';
+            mode.value = 'login';
       form.value.password = '';
     }
   } catch (e) {
     error.value = e.message || 'Ошибка';
+    // 429 — серверный лимит: разблокируем кнопку, когда истечёт Retry-After.
+    if (e.status === 429) {
+      const retry = Number(e.retryAfter || e.data?.retry_after || 0);
+      startCooldown(retry || 30);
+    }
   } finally {
     loading.value = false;
   }
@@ -87,10 +110,10 @@ async function submit() {
                 </div>
                 <div class="login-field">
                     <label for="last_name">фамилия</label>
-                    <input id="last_name" v-model="form.last_name" type="text" name="last_name" maxlength="30" required />
+                                        <input id="last_name" v-model="form.last_name" type="text" name="last_name" maxlength="30" required />
                 </div>
-</template>
-                        <div class="password-field">
+            </template>
+            <div class="password-field">
                 <label for="password">пароль</label>
                 <input v-model="form.password" type="password" id="password" name="password"
                        placeholder="Введите пароль" required />
@@ -104,11 +127,13 @@ async function submit() {
                     </span>
                 </label>
             </div>
-            <p v-if="success" class="login-success">{{ success }}</p>
+                        <p v-if="success" class="login-success">{{ success }}</p>
             <p v-if="error" class="login-error">{{ error }}</p>
             <div class="button-submit">
-                <button type="submit" :disabled="loading">
-                    {{ loading ? '...' : (mode === 'login' ? 'Войти' : 'Зарегистрироваться') }}
+                <button type="submit" :disabled="buttonDisabled">
+                    <template v-if="loading">...</template>
+                    <template v-else-if="cooldown > 0">Подождите {{ cooldown }} с</template>
+                    <template v-else>{{ mode === 'login' ? 'Войти' : 'Зарегистрироваться' }}</template>
                 </button>
             </div>
             <button type="button" class="toggle-mode" @click="mode = mode === 'login' ? 'register' : 'login'">

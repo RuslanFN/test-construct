@@ -11,6 +11,21 @@ const loading = ref(true);
 const error = ref('');
 const result = ref(null);
 const submitting = ref(false);
+// Лимит отправок на сервере (анти-накрутка): пока идёт пауза, кнопку не показываем активной.
+const cooldown = ref(0);
+let cooldownTimer = null;
+
+function startCooldown(seconds) {
+  cooldown.value = Math.max(1, Math.ceil(seconds || 0));
+  if (cooldownTimer) clearInterval(cooldownTimer);
+  cooldownTimer = setInterval(() => {
+    cooldown.value -= 1;
+    if (cooldown.value <= 0) {
+      clearInterval(cooldownTimer);
+      cooldownTimer = null;
+    }
+  }, 1000);
+}
 
 // данные участника (без аккаунта)
 const participant = ref({
@@ -235,6 +250,10 @@ async function submit() {
       test.value = null;
     } else {
       error.value = e.message;
+      // 429 — сработал лимит отправок с этого IP: показываем паузу.
+      if (e.status === 429) {
+        startCooldown(e.retryAfter || 30);
+      }
     }
   } finally {
     submitting.value = false;
@@ -395,8 +414,10 @@ watch(
       </div>
 
       <div class="take-submit">
-        <button :disabled="!canSubmit || submitting" @click="submit">
-          {{ submitting ? 'Проверка…' : 'Завершить тест' }}
+        <button :disabled="!canSubmit || submitting || cooldown > 0" @click="submit">
+          <template v-if="submitting">Проверка…</template>
+          <template v-else-if="cooldown > 0">Подождите {{ cooldown }} с</template>
+          <template v-else>Завершить тест</template>
         </button>
       </div>
       <p class="take-hint"><span class="take-required">*</span> — обязательный вопрос</p>

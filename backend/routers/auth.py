@@ -8,9 +8,25 @@ from schemas.user import UserCreate, UserLogin, UserPublic
 from security import create_access_token, create_refresh_token, decode_refresh_token
 from services import ratelimit
 from services.deps import get_current_user
+from services.http_client import client_ip
 from services.user_service import authenticate, create_user, delete_user, user_to_public
 
 router = APIRouter(prefix='/api/auth', tags=['auth'])
+
+# Лимиты на чувствительные операции (см. services/ratelimit.py)
+REGISTER_WINDOW = 600      # окно антиспама регистрации, сек
+REGISTER_LIMIT = 3         # заявок за окно с одного IP / на один логин
+LOGIN_WINDOW = 300         # окно подсчёта неудачных входов, сек
+LOGIN_LIMIT = 5            # неудачных попыток до блокировки
+
+
+def _too_many(exc: ratelimit.TooManyAttempts) -> HTTPException:
+    """Единый ответ 429 с заголовком Retry-After."""
+    return HTTPException(
+        status.HTTP_429_TOO_MANY_REQUESTS,
+        str(exc),
+        headers={'Retry-After': str(exc.retry_after)},
+    )
 
 
 def _set_cookie(response: Response, key: str, value: str, max_age: int) -> None:
@@ -49,43 +65,43 @@ def _issue_tokens(response: Response, user_id: str) -> None:
 
 
 @router.post('/register', status_code=status.HTTP_201_CREATED)
-async def register(payload: UserCreate):
+async def register(payload: UserCreate, request: Request):
     """Регистрация методиста. Учётка ожидает подтверждения админом — вход пока запрещён."""
+    # Антиспам заявок: ограничиваем по IP (чтобы не флудили разными логинами)
+    # и по логину (чтобы не заваливали заявками один и тот же).
+    keys = ratelimit.keys_register(client_ip(request), payload.username)
+    try:
+        ratelimit.check(*keys)
+    except ratelimit.TooManyAttempts as e:
+        raise _too_many(e)
+
     await create_user(payload)
+    # Учитываем удачную заявку — неудачные (409 валидация) не наказываем,
+    # иначе честный пользователь блокируется из-за опечаток.
+    ratelimit.hit(*keys, window=REGISTER_WINDOW, limit=REGISTER_LIMIT)
     return {
         'status': 'pending',
         'message': 'Заявка на регистрацию отправлена. Дождитесь подтверждения администратором.',
     }
 
 
-def _client_ip(request: Request) -> str:
-    """IP клиента с учётом прокси (nginx прокидывает X-Forwarded-For)."""
-    xff = request.headers.get('x-forwarded-for')
-    if xff:
-        return xff.split(',')[0].strip()
-    return request.client.host if request.client else 'unknown'
-
-
 @router.post('/login', response_model=UserPublic)
 async def login(payload: UserLogin, request: Request, response: Response):
-    # защита от перебора паролей: ключ = IP + логин
-    rl_key = f'{_client_ip(request)}|{payload.username}'
+    # Защита от перебора: лимит независимо по IP и по логину,
+    # иначе сменой второй части ключа можно обойти ограничение.
+    keys = ratelimit.keys_login(client_ip(request), payload.username)
     try:
-        ratelimit.check_and_raise(rl_key)
+        ratelimit.check(*keys)
     except ratelimit.TooManyAttempts as e:
-        raise HTTPException(
-            status.HTTP_429_TOO_MANY_REQUESTS,
-            str(e),
-            headers={'Retry-After': str(e.retry_after)},
-        )
+        raise _too_many(e)
 
     try:
         doc = await authenticate(payload.username, payload.password)
     except HTTPException:
-        ratelimit.register_failure(rl_key)
+        ratelimit.hit(*keys, window=LOGIN_WINDOW, limit=LOGIN_LIMIT)
         raise
 
-    ratelimit.reset(rl_key)
+    ratelimit.reset(*keys)
     _issue_tokens(response, str(doc['_id']))
     return user_to_public(doc)
 
