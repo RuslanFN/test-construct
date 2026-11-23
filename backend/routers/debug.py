@@ -29,7 +29,11 @@ async def debug_ip(request: Request, current=Depends(require_admin)):
     """
     xff = request.headers.get('x-forwarded-for')
     xff_parts = [p.strip() for p in xff.split(',')] if xff else []
+    header_name = (config.trusted_client_ip_header or '').strip().lower()
     return {
+        # Сырое значение из header'а, который backend ДОЛЖЕН читать.
+        'trusted_client_ip_header': config.trusted_client_ip_header,
+        'trusted_header_value': request.headers.get(header_name) if header_name else None,
         'remote_addr': request.client.host if request.client else None,
         'x_forwarded_for': xff,
         'xff_first': xff_parts[0] if xff_parts else None,

@@ -80,6 +80,18 @@ if not admin_password or admin_password == 'admin12345':
         'Не задан корректный admin_password. Укажите в .env надёжный пароль администратора.'
     )
 
+# HTTP-прокси перед приложением (определение IP клиента)
+
+# Заголовок, из которого берём реальный IP клиента. ВАЖНО: доверять можно только
+# заголовку, который ставит ТОЛЬКО доверенный прокси и который он перезаписывает
+# (клиентский вариант отбрасывается). По умолчанию пусто = не доверяем никаким
+# заголовкам и берём адрес сокета (безопасно, подделка невозможна).
+#   Amvera (Envoy):          trusted_client_ip_header=x-envoy-external-address
+#   свой nginx с real_ip:     trusted_client_ip_header=x-real-ip
+#   прокси с XFF:             trusted_client_ip_header=x-forwarded-for  (берётся ПОСЛЕДНИЙ адрес)
+#   прямой доступ:            (пусто)
+trusted_client_ip_header = (getenv('trusted_client_ip_header', '') or '').strip().lower()
+
 # Разрешённые источники для CORS (через запятую). В проде за nginx (один origin)
 # CORS не нужен — оставьте пустым. Пример: http://localhost:5173,http://127.0.0.1:5173
 cors_origins = [o.strip() for o in getenv('cors_origins', '').split(',') if o.strip()]
