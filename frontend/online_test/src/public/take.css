@@ -124,6 +124,14 @@
 }
 .take-submit button:hover { background: #e86a1c; }
 .take-submit button:disabled { background: #fcd0b3; cursor: not-allowed; }
+/* Второстепенная кнопка «Отмена» рядом с отправкой */
+.take-submit .take-cancel {
+  color: #334155;
+  background: #fff;
+  border: 1px solid #cbd5e1;
+}
+.take-submit .take-cancel:hover:not(:disabled) { background: #f1f5f9; }
+.take-submit .take-cancel:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .take-error {
   padding: 12px 16px; color: #b91c1c; background: #fef2f2;

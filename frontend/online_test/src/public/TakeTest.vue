@@ -48,10 +48,19 @@ function onCaptchaChange(v) {
 
 // Показать капчу перед отправкой
 function openCaptcha() {
+  if (!canSubmit.value) return; // защита: не открываем капчу, если форма не заполнена
   error.value = '';
   captchaOpen.value = true;
   // Блок только что отрисован — просим задачу.
   setTimeout(() => captchaBox.value?.refresh?.(), 0);
+}
+
+// Закрыть капчу и вернуться к тесту: не оставляем человека в тупике,
+// если задача не загрузилась (сеть/лимит) или он передумал отправлять.
+function closeCaptcha() {
+  captchaOpen.value = false;
+  captcha.value = { token: null, answer: '', honeypot: null };
+  error.value = '';
 }
 
 // ответы: по questionId
@@ -453,13 +462,18 @@ watch(
           <template v-if="cooldown > 0">Подождите {{ cooldown }} с</template>
           <template v-else>Завершить тест</template>
         </button>
-        <button v-else
-                :disabled="!canSubmit || submitting || cooldown > 0 || !captcha.token || !captcha.answer"
-                @click="submit">
-          <template v-if="submitting">Проверка…</template>
-          <template v-else-if="cooldown > 0">Подождите {{ cooldown }} с</template>
-          <template v-else>Отправить результат</template>
-        </button>
+        <template v-else>
+          <button
+            :disabled="!canSubmit || submitting || cooldown > 0 || !captcha.token || !captcha.answer"
+            @click="submit">
+            <template v-if="submitting">Проверка…</template>
+            <template v-else-if="cooldown > 0">Подождите {{ cooldown }} с</template>
+            <template v-else>Отправить результат</template>
+          </button>
+          <button type="button" class="take-cancel" :disabled="submitting" @click="closeCaptcha">
+            Отмена
+          </button>
+        </template>
       </div>
       <p class="take-hint"><span class="take-required">*</span> — обязательный вопрос</p>
     </template>
