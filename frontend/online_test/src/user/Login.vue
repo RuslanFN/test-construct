@@ -25,11 +25,6 @@ const loading = ref(false);
 const cooldown = ref(0);
 let cooldownTimer = null;
 
-
-
-
-
-
 // Капча: при регистрации — всегда; при входе — по требованию сервера.
 const captcha = ref({ token: null, answer: '', honeypot: null });
 const captchaNeeded = ref(false);
@@ -56,13 +51,10 @@ function startCooldown(seconds) {
 }
 
 function switchMode() {
-  mode.value = mode.value === 'login' ? 'register' : 'login';
+    mode.value = mode.value === 'login' ? 'register' : 'login';
   error.value = '';
   success.value = '';
-
-
-
-    captchaNeeded.value = false;
+  captchaNeeded.value = false;
   captcha.value = { token: null, answer: '', honeypot: null };
   // Пересоздаём задачу под новую форму (если блок виден — компонент загрузит сам).
   captchaBox.value?.reset?.();
@@ -93,32 +85,34 @@ async function submit() {
       const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/profile';
       router.push(redirect);
     } else {
-      const res = await register({
+            const res = await register({
         username: form.value.username,
         password: form.value.password,
         email: form.value.email,
+        first_name: form.value.first_name,
+        last_name: form.value.last_name,
         pd_consent: pdConsent.value,
-                captcha_token: captcha.value.token,
+        captcha_token: captcha.value.token,
         captcha_answer: captcha.value.answer,
         captcha_honeypot: captcha.value.honeypot,
       });
-      // Регистрация больше не логинит: показываем сообщение об ожидании подтверждения
-
-
-
-
-
-            success.value = res?.message || 'Заявка на регистрацию отправлена. Дождитесь подтверждения администратором.';
+            // Регистрация больше не логинит: показываем сообщение об ожидании подтверждения
+      success.value = res?.message || 'Заявка на регистрацию отправлена. Дождитесь подтверждения администратором.';
       mode.value = 'login';
       form.value.password = '';
       captchaNeeded.value = false;
       captcha.value = { token: null, answer: '', honeypot: null };
     }
-  } catch (e) {
+    } catch (e) {
     error.value = e.message || 'Ошибка';
     // 429 — серверный лимит: разблокируем кнопку, когда истечёт Retry-After.
+    if (e.status === 429) {
+      const retry = Number(e.retryAfter || e.data?.retry_after || 0);
+      startCooldown(retry || 30);
+    }
+    // Сервер требует капчу (например, 3-я попытка входа) — показываем и обновляем задачу.
     if (e.captchaRequired) {
-            captchaNeeded.value = true;
+      captchaNeeded.value = true;
       captcha.value = { token: null, answer: '', honeypot: null };
       // Ждём рендер блока, затем просим новую задачу.
       setTimeout(() => captchaBox.value?.refresh?.(), 0);
