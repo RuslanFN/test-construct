@@ -95,6 +95,19 @@ def fastapi_app(fake_db):
     return main.app
 
 
+@pytest.fixture(autouse=True)
+def captcha_no_min_delay(monkeypatch):
+    """Интеграционные тесты получают капчу и отправляют ответ сразу.
+
+    Порог «слишком быстро» (по умолчанию 1 сек) в тестах отключаем — иначе
+    любой валидный сценарий был бы отклонён как бот. Сама проверка порога
+    покрыта отдельными тестами в test_captcha_ratelimit.py.
+    """
+    from services import captcha
+
+    monkeypatch.setattr(captcha, 'MIN_SECONDS', 0.0)
+
+
 @pytest.fixture()
 def api_client(fastapi_app):
     from fastapi.testclient import TestClient

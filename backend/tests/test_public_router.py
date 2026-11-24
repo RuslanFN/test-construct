@@ -27,20 +27,33 @@ def _participant_payload():
     }
 
 
-def _captcha(api_client):
+_WORDS = {
+    'ноль': 0, 'один': 1, 'два': 2, 'три': 3, 'четыре': 4, 'пять': 5, 'шесть': 6,
+    'семь': 7, 'восемь': 8, 'девять': 9, 'десять': 10, 'одиннадцать': 11,
+    'двенадцать': 12, 'тринадцать': 13, 'четырнадцать': 14, 'пятнадцать': 15,
+    'шестнадцать': 16, 'семнадцать': 17, 'восемнадцать': 18, 'девятнадцать': 19,
+    'двадцать': 20,
+}
+
+
+def _captcha(api_client, honeypot=None):
     """Получить задачу капчи и вернуть готовые поля captcha_token/captcha_answer.
 
+    Вопрос приходит словами («семь плюс три»), ответ — цифрами.
     Отправка теста на публичном эндпоинте требует капчу на КАЖДЫЙ запрос,
     поэтому перед каждым submit берём свежую задачу и решаем её.
     """
     resp = api_client.get('/api/auth/captcha')
     assert resp.status_code == 200, resp.text
     data = resp.json()
-    a, _, b = data['question'].partition(' + ')
-    return {
+    a, _, b = data['question'].partition(' плюс ')
+    out = {
         'captcha_token': data['token'],
-        'captcha_answer': str(int(a) + int(b)),
+        'captcha_answer': str(_WORDS[a] + _WORDS[b]),
     }
+    if honeypot is not None:
+        out['captcha_honeypot'] = honeypot
+    return out
 
 
 def test_get_public_test_hides_answers(api_client, fake_db):
@@ -128,6 +141,22 @@ def test_submit_wrong_captcha_rejected(api_client, fake_db):
     )
     assert resp.status_code == 400
     assert resp.json()['detail']['code'] == 'captcha_required'
+
+
+def test_submit_honeypot_filled_rejected(api_client, fake_db):
+    """Заполненное скрытое поле-ловушка — 400, попытка не сохраняется."""
+    doc, q, correct, wrong = _published_test_with_one_question(fake_db)
+    resp = api_client.post(
+        '/api/public/tests/publictok/submit',
+        json={
+            'participant': _participant_payload(),
+            'answers': [{'question_id': q['id'], 'selected': [correct]}],
+            **_captcha(api_client, honeypot='bot@spam.example'),
+        },
+    )
+    assert resp.status_code == 400
+    assert resp.json()['detail']['code'] == 'captcha_required'
+    assert len(fake_db['attempts']._docs) == 0
 
 
 def test_submit_invalid_participant_422(api_client, fake_db):

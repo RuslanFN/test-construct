@@ -24,6 +24,8 @@ class UserCreate(BaseModel):
     # проверка «я не робот»: токен задачи и ответ (проверяется в роутере)
     captcha_token: str | None = None
     captcha_answer: str | None = None
+    # скрытое поле-ловушка (honeypot): человек его не видит, бот заполняет
+    captcha_honeypot: str | None = None
 
     @field_validator('email', mode='before')
     @classmethod
@@ -89,6 +91,8 @@ class UserLogin(BaseModel):
     # капча требуется сервером (например, после неудачных входов) — необязательна в схеме
     captcha_token: str | None = None
     captcha_answer: str | None = None
+    # скрытое поле-ловушка (honeypot) для отсева ботов
+    captcha_honeypot: str | None = None
 
 
 class UserPublic(BaseModel):

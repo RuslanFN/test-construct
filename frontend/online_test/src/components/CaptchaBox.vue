@@ -1,32 +1,41 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref } from 'vue';
 import { api } from '../api';
 
-// Арифметическая капча «я не робот». Задача запрашивается у сервера,
-// ответ проверяется на сервере (подписанный одноразовый токен).
+// Арифметическая капча «я не робот»: пример СЛОВАМИ, ответ ЦИФРАМИ.
+// Задача запрашивается у сервера, ответ проверяется на сервере
+// (подписанный одноразовый токен + honeypot).
 const props = defineProps({
   label: { type: String, default: 'Проверка «я не робот»' },
 });
-const emit = defineEmits(['change']); // отдаёт { token, answer } родителю
+const emit = defineEmits(['change']); // отдаёт { token, answer, honeypot }
 
 const question = ref('');
 const token = ref('');
 const answer = ref('');
+const honeypot = ref(''); // скрытое поле-ловушка: человек его не видит
 const loading = ref(false);
+const loaded = ref(false);
 const error = ref('');
 
 function notify() {
-  emit('change', { token: token.value || null, answer: answer.value });
+  emit('change', {
+    token: token.value || null,
+    answer: answer.value,
+    honeypot: honeypot.value || null,
+  });
 }
 
 async function load() {
   loading.value = true;
+  loaded.value = false;
   error.value = '';
   answer.value = '';
   try {
     const data = await api.getCaptcha();
     question.value = data.question;
     token.value = data.token;
+    loaded.value = true;
   } catch (e) {
     error.value = e.message || 'Не удалось загрузить задачу';
   } finally {
@@ -34,8 +43,6 @@ async function load() {
     notify();
   }
 }
-
-onMounted(load);
 
 // После неудачной отправки задача израсходована — обновляем.
 defineExpose({ refresh: load, reset: load });
@@ -45,9 +52,14 @@ defineExpose({ refresh: load, reset: load });
   <div class="captcha">
     <label class="captcha-label">{{ label }}</label>
     <div class="captcha-row">
+      <!-- Задача запрашивается только по нажатию (в конце теста), а не при загрузке -->
+      <button v-if="!loaded && !loading" type="button" class="captcha-start" @click="load">
+        Показать пример
+      </button>
       <span v-if="loading" class="captcha-q">…</span>
-      <span v-else class="captcha-q">Сколько будет {{ question }} ?</span>
-      <input
+      <template v-else-if="loaded">
+        <span class="captcha-q">Сколько будет: {{ question }}?</span>
+        <input
         v-model="answer"
         type="number"
         inputmode="numeric"
@@ -55,8 +67,23 @@ defineExpose({ refresh: load, reset: load });
         placeholder="Ответ"
         @input="notify"
       />
-      <button type="button" class="captcha-refresh" title="Другая задача"
+        <button type="button" class="captcha-refresh" title="Другой пример"
               :disabled="loading" @click="load">⟳</button>
+</template>
+    </div>
+    <p v-if="loaded" class="captcha-hint">Введите ответ цифрами.</p>
+    <!-- Ловушка для ботов: визуально скрыта, человек её не видит и не заполняет -->
+    <div class="captcha-hp" aria-hidden="true">
+      <label for="hp-email">E-mail</label>
+      <input
+        id="hp-email"
+        v-model="honeypot"
+        type="text"
+        name="email"
+        tabindex="-1"
+        autocomplete="off"
+        @input="notify"
+      />
     </div>
     <p v-if="error" class="captcha-error">{{ error }}</p>
   </div>
@@ -77,11 +104,11 @@ defineExpose({ refresh: load, reset: load });
   display: flex;
   align-items: center;
   gap: 10px;
+  flex-wrap: wrap;
 }
 .captcha-q {
   font-size: 15px;
   color: #0f172a;
-  white-space: nowrap;
 }
 .captcha-input {
   width: 90px;
@@ -95,6 +122,16 @@ defineExpose({ refresh: load, reset: load });
 .captcha-input:focus {
   border-color: #1f6feb;
   box-shadow: 0 0 0 3px rgba(31, 111, 235, 0.15);
+}
+.captcha-start {
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f6feb;
+  background: #eef4ff;
+  border: 1px solid #c7dbff;
+  border-radius: 8px;
+  cursor: pointer;
 }
 .captcha-refresh {
   padding: 6px 10px;
@@ -110,9 +147,24 @@ defineExpose({ refresh: load, reset: load });
   opacity: 0.5;
   cursor: not-allowed;
 }
+.captcha-hint {
+  margin: 0;
+  font-size: 12px;
+  color: #64748b;
+}
+/* Honeypot: уводим за пределы экрана, но оставляем в DOM (боты-парсеры
+   заполняют такие поля, люди — нет). Не display:none — часть ботов пропустит. */
+.captcha-hp {
+  position: absolute;
+  left: -9999px;
+  top: -9999px;
+  height: 0;
+  overflow: hidden;
+}
 .captcha-error {
   margin: 0;
   font-size: 13px;
   color: #b91c1c;
 }
 </style>
+

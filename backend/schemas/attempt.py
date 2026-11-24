@@ -63,6 +63,8 @@ class AttemptSubmit(BaseModel):
     # проверка «я не робот» — на каждую отправку (проверяется в роутере)
     captcha_token: str | None = None
     captcha_answer: str | None = None
+    # скрытое поле-ловушка (honeypot) для отсева ботов
+    captcha_honeypot: str | None = None
 
 
 class QuestionResultOut(BaseModel):

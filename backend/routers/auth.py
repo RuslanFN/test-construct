@@ -105,7 +105,7 @@ async def register(payload: UserCreate, request: Request):
         raise _too_many(e)
 
     # Капча на регистрацию — всегда.
-    if not captcha.verify(payload.captcha_token, payload.captcha_answer):
+    if not captcha.verify(payload.captcha_token, payload.captcha_answer, payload.captcha_honeypot):
         raise _captcha_required()
 
     await create_user(payload)
@@ -130,7 +130,7 @@ async def login(payload: UserLogin, request: Request, response: Response):
 
     # Капча на вход — начиная с 3-го запроса (после 2 неудач).
     if ratelimit.count(*keys, window=LOGIN_WINDOW) >= CAPTCHA_LOGIN_AFTER_FAILS:
-        if not captcha.verify(payload.captcha_token, payload.captcha_answer):
+        if not captcha.verify(payload.captcha_token, payload.captcha_answer, payload.captcha_honeypot):
             raise _captcha_required()
 
     try:

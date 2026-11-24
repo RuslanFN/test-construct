@@ -15,16 +15,31 @@ def clean_ratelimit():
     ratelimit._reset_all()
 
 
-def _solve_captcha(api_client):
-    """Свежая задача капчи + решённый ответ (для register/login/submit)."""
+_WORDS = {
+    'ноль': 0, 'один': 1, 'два': 2, 'три': 3, 'четыре': 4, 'пять': 5, 'шесть': 6,
+    'семь': 7, 'восемь': 8, 'девять': 9, 'десять': 10, 'одиннадцать': 11,
+    'двенадцать': 12, 'тринадцать': 13, 'четырнадцать': 14, 'пятнадцать': 15,
+    'шестнадцать': 16, 'семнадцать': 17, 'восемнадцать': 18, 'девятнадцать': 19,
+    'двадцать': 20,
+}
+
+
+def _solve_captcha(api_client, honeypot=None):
+    """Свежая задача капчи + решённый ответ (для register/login/submit).
+
+    Вопрос приходит словами («семь плюс три»), ответ — цифрами.
+    """
     resp = api_client.get('/api/auth/captcha')
     assert resp.status_code == 200, resp.text
     data = resp.json()
-    a, _, b = data['question'].partition(' + ')
-    return {
+    a, _, b = data['question'].partition(' плюс ')
+    out = {
         'captcha_token': data['token'],
-        'captcha_answer': str(int(a) + int(b)),
+        'captcha_answer': str(_WORDS[a] + _WORDS[b]),
     }
+    if honeypot is not None:
+        out['captcha_honeypot'] = honeypot
+    return out
 
 
 def _register_payload(**over):

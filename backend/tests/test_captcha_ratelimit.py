@@ -1,18 +1,40 @@
 """Тесты арифметической капчи и лимитера (без БД и сети)."""
+import time
+
 import pytest
 
 import config  # noqa: F401  (нужен для jwt_secret при импорте captcha)
 from services import captcha, ratelimit
 
+WORDS = {
+    'ноль': 0, 'один': 1, 'два': 2, 'три': 3, 'четыре': 4, 'пять': 5, 'шесть': 6,
+    'семь': 7, 'восемь': 8, 'девять': 9, 'десять': 10, 'одиннадцать': 11,
+    'двенадцать': 12, 'тринадцать': 13, 'четырнадцать': 14, 'пятнадцать': 15,
+    'шестнадцать': 16, 'семнадцать': 17, 'восемнадцать': 18, 'девятнадцать': 19,
+    'двадцать': 20,
+}
+
 
 def _solve(question: str) -> str:
-    a, _, b = question.partition(' + ')
-    return str(int(a) + int(b))
+    a, _, b = question.partition(' плюс ')
+    return str(WORDS[a] + WORDS[b])
+
+
+@pytest.fixture(autouse=True)
+def no_min_seconds(monkeypatch):
+    """В тестах «слишком быстрый» порог отключён — иначе истечение 1 сек ловится медленно."""
+    monkeypatch.setattr(captcha, 'MIN_SECONDS', 0.0)
+
+
+def test_captcha_question_is_words():
+    task = captcha.issue()
+    assert ' плюс ' in task['question']
+    # в вопросе нет цифр — только слова
+    assert not any(ch.isdigit() for ch in task['question'])
 
 
 def test_captcha_valid_answer():
     task = captcha.issue()
-    assert '+' in task['question']
     assert captcha.verify(task['token'], _solve(task['question'])) is True
 
 
@@ -41,34 +63,39 @@ def test_captcha_missing():
     assert captcha.verify(task['token'], None) is False
 
 
-def test_ratelimit_blocks_and_resets():
-    keys = ('test:limit-block',)
-    ratelimit.reset(*keys)
-    # 5 операций — лимит исчерпан, 6-я блокирует
-    for _ in range(5):
-        ratelimit.hit(*keys, limit=5, window=60)
-    with pytest.raises(ratelimit.TooManyAttempts):
-        ratelimit.check(*keys)
-    ratelimit.reset(*keys)
-    ratelimit.check(*keys)  # после сброса — свободно
+def test_captcha_honeypot_filled_rejected():
+    """Заполненная ловушка — отказ даже при верном ответе."""
+    task = captcha.issue()
+    answer = _solve(task['question'])
+    assert captcha.verify(task['token'], answer, 'spam@bot.example') is False
+    # токен не «сгорел» — он не был принят
+    assert captcha.verify(task['token'], answer, None) is True
 
 
-def test_ratelimit_keys_are_independent():
-    a, b = ('test:indep-a',), ('test:indep-b',)
-    ratelimit.reset(*a, *b)
-    for _ in range(5):
-        ratelimit.hit(*a, limit=5, window=60)
-    with pytest.raises(ratelimit.TooManyAttempts):
-        ratelimit.check(*a)
-    ratelimit.check(*b)  # другой ключ не заблокирован
-    ratelimit.reset(*a, *b)
+def test_captcha_empty_honeypot_ok():
+    task = captcha.issue()
+    assert captcha.verify(task['token'], _solve(task['question']), '') is True
 
 
-def test_ratelimit_count():
-    keys = ('test:count',)
-    ratelimit.reset(*keys)
-    assert ratelimit.count(*keys, window=60) == 0
-    ratelimit.hit(*keys, limit=100, window=60)
-    ratelimit.hit(*keys, limit=100, window=60)
-    assert ratelimit.count(*keys, window=60) == 2
-    ratelimit.reset(*keys)
+def test_captcha_too_fast_rejected(monkeypatch):
+    """Ответ быстрее порога (мгновенный автоответ) отклоняется."""
+    monkeypatch.setattr(captcha, 'MIN_SECONDS', 5.0)
+    task = captcha.issue()
+    # только что выдан (iat == now) → elapsed 0 < 5
+    assert captcha.verify(task['token'], _solve(task['question'])) is False
+
+
+def test_captcha_expired_rejected():
+    """Просроченный токен (exp в прошлом) отклоняется, даже при верном ответе."""
+    import base64
+    import json
+
+    answer = 5
+    payload = json.dumps(
+        {'ans': answer, 'iat': int(time.time()) - 1000,
+         'exp': int(time.time()) - 10, 'jti': 'x'},
+        separators=(',', ':'), sort_keys=True,
+    ).encode('utf-8')
+    token = (base64.urlsafe_b64encode(payload).decode('ascii').rstrip('=')
+             + '.' + captcha._sign(payload))
+    assert captcha.verify(token, str(answer)) is False

@@ -36,12 +36,22 @@ const participant = ref({
   certificate_number: '',
 });
 
-// Капча «я не робот» — обязательна на каждую отправку.
-const captcha = ref({ token: null, answer: '' });
+// Капча «я не робот» — обязательна на каждую отправку, появляется в конце
+// (по кнопке «Завершить»), поэтому TTL задачи не тикает, пока решают тест.
+const captcha = ref({ token: null, answer: '', honeypot: null });
 const captchaBox = ref(null);
+const captchaOpen = ref(false);
 
 function onCaptchaChange(v) {
   captcha.value = v;
+}
+
+// Показать капчу перед отправкой
+function openCaptcha() {
+  error.value = '';
+  captchaOpen.value = true;
+  // Блок только что отрисован — просим задачу.
+  setTimeout(() => captchaBox.value?.refresh?.(), 0);
 }
 
 // ответы: по questionId
@@ -251,6 +261,7 @@ async function submit() {
       })),
       captcha_token: captcha.value.token,
       captcha_answer: captcha.value.answer,
+      captcha_honeypot: captcha.value.honeypot,
     };
     result.value = await api.submitAttempt(props.token, payload);
   } catch (e) {
@@ -267,8 +278,9 @@ async function submit() {
       }
       // Капча неверна/просрочена — обновляем задачу для повторной отправки.
       if (e.captchaRequired) {
-        captcha.value = { token: null, answer: '' };
-        captchaBox.value?.refresh?.();
+        captcha.value = { token: null, answer: '', honeypot: null };
+        captchaOpen.value = true;
+        setTimeout(() => captchaBox.value?.refresh?.(), 0);
       }
     }
   } finally {
@@ -288,7 +300,8 @@ watch(
     answers.value = {};
 
     participant.value = { last_name: '', first_name: '', middle_name: '', certificate_number: '' };
-    captcha.value = { token: null, answer: '' };
+    captcha.value = { token: null, answer: '', honeypot: null };
+    captchaOpen.value = false;
     captchaBox.value?.reset?.();
     error.value = '';
     load();
@@ -431,15 +444,21 @@ watch(
         </div>
       </div>
 
-      <div class="take-captcha">
+      <div v-if="captchaOpen" class="take-captcha">
         <CaptchaBox ref="captchaBox" @change="onCaptchaChange" />
       </div>
 
       <div class="take-submit">
-        <button :disabled="!canSubmit || submitting || cooldown > 0" @click="submit">
+        <button v-if="!captchaOpen" :disabled="!canSubmit || cooldown > 0" @click="openCaptcha">
+          <template v-if="cooldown > 0">Подождите {{ cooldown }} с</template>
+          <template v-else>Завершить тест</template>
+        </button>
+        <button v-else
+                :disabled="!canSubmit || submitting || cooldown > 0 || !captcha.token || !captcha.answer"
+                @click="submit">
           <template v-if="submitting">Проверка…</template>
           <template v-else-if="cooldown > 0">Подождите {{ cooldown }} с</template>
-          <template v-else>Завершить тест</template>
+          <template v-else>Отправить результат</template>
         </button>
       </div>
       <p class="take-hint"><span class="take-required">*</span> — обязательный вопрос</p>

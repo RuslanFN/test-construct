@@ -38,7 +38,7 @@ async def submit(token: str, payload: AttemptSubmit, request: Request):
 
     # Капча на отправку — обязательна КАЖДЫЙ раз (участник без аккаунта,
     # токен одноразовый). Отсекает скриптовую накрутку попыток.
-    if not captcha.verify(payload.captcha_token, payload.captcha_answer):
+    if not captcha.verify(payload.captcha_token, payload.captcha_answer, payload.captcha_honeypot):
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST,
             detail={

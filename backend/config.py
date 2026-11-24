@@ -95,3 +95,11 @@ trusted_client_ip_header = (getenv('trusted_client_ip_header', '') or '').strip(
 # Разрешённые источники для CORS (через запятую). В проде за nginx (один origin)
 # CORS не нужен — оставьте пустым. Пример: http://localhost:5173,http://127.0.0.1:5173
 cors_origins = [o.strip() for o in getenv('cors_origins', '').split(',') if o.strip()]
+
+# Капча «я не робот» (арифметика словами, ответ цифрами)
+# Время жизни задачи, сек. Капча на отправку теста показывается в конце (по кнопке),
+# поэтому её решают сразу — короткий TTL достаточен.
+captcha_ttl_seconds = int(getenv('captcha_ttl_seconds', '600'))
+# Минимальное время решения, сек: ответ быстрее порога считается ботом.
+# 1 сек: человек не успевает прочитать пример и набрать ответ.
+captcha_min_seconds = float(getenv('captcha_min_seconds', '1'))
