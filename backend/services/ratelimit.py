@@ -89,6 +89,13 @@ def reset(*keys: str) -> None:
         _penalty.pop(key, None)
 
 
+def _reset_all() -> None:
+    """Сбросить всё состояние целиком (для тестов / ручной аварийной очистки)."""
+    _hits.clear()
+    _locked_until.clear()
+    _penalty.clear()
+
+
 def remaining(*keys: str) -> float:
     """Сколько секунд ещё действует блокировка (0 — не заблокировано)."""
     now = _now()
