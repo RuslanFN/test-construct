@@ -38,6 +38,13 @@ async function request(path, options = {}) {
     // таймер и разблокировать кнопку точно к моменту снятия лимита.
     const retryAfter = Number(res.headers.get('Retry-After'));
     if (Number.isFinite(retryAfter) && retryAfter > 0) err.retryAfter = retryAfter;
+    // Сервер просит решить капчу: detail = {code:'captcha_required', message}.
+    if (data && typeof data === 'object'
+        && data.detail && typeof data.detail === 'object'
+        && data.detail.code === 'captcha_required') {
+      err.captchaRequired = true;
+      err.message = data.detail.message || 'Подтвердите, что вы не робот';
+    }
     throw err;
   }
 
@@ -134,6 +141,7 @@ export const api = {
   logout: () => request('/api/auth/logout', { method: 'POST' }),
   me: () => request('/api/auth/me'),
   deleteMe: () => request('/api/auth/me', { method: 'DELETE' }),
+  getCaptcha: () => request('/api/auth/captcha'),
 
   // tests
   myTests: () => request('/api/tests'),

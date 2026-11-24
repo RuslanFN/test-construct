@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Request, status
 
 from schemas.attempt import AttemptResult, AttemptSubmit
 from schemas.test import TestPublic
-from services import ratelimit
+from services import captcha, ratelimit
 from services.attempt_service import submit_attempt
 from services.http_client import client_ip
 from services.test_service import get_published_by_token, test_to_public
@@ -34,6 +34,17 @@ async def submit(token: str, payload: AttemptSubmit, request: Request):
             status.HTTP_429_TOO_MANY_REQUESTS,
             str(e),
             headers={'Retry-After': str(e.retry_after)},
+        )
+
+    # Капча на отправку — обязательна КАЖДЫЙ раз (участник без аккаунта,
+    # токен одноразовый). Отсекает скриптовую накрутку попыток.
+    if not captcha.verify(payload.captcha_token, payload.captcha_answer):
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            detail={
+                'code': 'captcha_required',
+                'message': 'Подтвердите, что вы не робот: решите пример.',
+            },
         )
 
     result = await submit_attempt(doc, payload, user_id=None)

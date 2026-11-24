@@ -21,6 +21,9 @@ class UserCreate(BaseModel):
     role: Role = Role.METODIST
     # согласие на обработку ПДн — обязательно
     pd_consent: bool = False
+    # проверка «я не робот»: токен задачи и ответ (проверяется в роутере)
+    captcha_token: str | None = None
+    captcha_answer: str | None = None
 
     @field_validator('email', mode='before')
     @classmethod
@@ -83,6 +86,9 @@ class UserCreate(BaseModel):
 class UserLogin(BaseModel):
     username: str
     password: str
+    # капча требуется сервером (например, после неудачных входов) — необязательна в схеме
+    captcha_token: str | None = None
+    captcha_answer: str | None = None
 
 
 class UserPublic(BaseModel):

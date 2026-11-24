@@ -2,6 +2,7 @@
 import { ref, onMounted, computed, watch } from 'vue';
 import { api } from '../api';
 import ImageCarousel from '../components/ImageCarousel.vue';
+import CaptchaBox from '../components/CaptchaBox.vue';
 import '../components/carousel.css';
 
 const props = defineProps({ token: { type: String, required: true } });
@@ -34,6 +35,14 @@ const participant = ref({
   middle_name: '',
   certificate_number: '',
 });
+
+// Капча «я не робот» — обязательна на каждую отправку.
+const captcha = ref({ token: null, answer: '' });
+const captchaBox = ref(null);
+
+function onCaptchaChange(v) {
+  captcha.value = v;
+}
 
 // ответы: по questionId
 const answers = ref({}); // { [qid]: { selected: [], matches: {} } }
@@ -240,6 +249,8 @@ async function submit() {
         selected: a.selected,
         matches: Object.entries(a.matches).map(([l, r]) => [Number(l), Number(r)]),
       })),
+      captcha_token: captcha.value.token,
+      captcha_answer: captcha.value.answer,
     };
     result.value = await api.submitAttempt(props.token, payload);
   } catch (e) {
@@ -253,6 +264,11 @@ async function submit() {
       // 429 — сработал лимит отправок с этого IP: показываем паузу.
       if (e.status === 429) {
         startCooldown(e.retryAfter || 30);
+      }
+      // Капча неверна/просрочена — обновляем задачу для повторной отправки.
+      if (e.captchaRequired) {
+        captcha.value = { token: null, answer: '' };
+        captchaBox.value?.refresh?.();
       }
     }
   } finally {
@@ -272,6 +288,8 @@ watch(
     answers.value = {};
 
     participant.value = { last_name: '', first_name: '', middle_name: '', certificate_number: '' };
+    captcha.value = { token: null, answer: '' };
+    captchaBox.value?.reset?.();
     error.value = '';
     load();
   },
@@ -411,6 +429,10 @@ watch(
             </div>
           </div>
         </div>
+      </div>
+
+      <div class="take-captcha">
+        <CaptchaBox ref="captchaBox" @change="onCaptchaChange" />
       </div>
 
       <div class="take-submit">

@@ -60,6 +60,9 @@ class GivenAnswer(BaseModel):
 class AttemptSubmit(BaseModel):
     participant: ParticipantIn
     answers: list[GivenAnswer] = Field(default_factory=list)
+    # проверка «я не робот» — на каждую отправку (проверяется в роутере)
+    captcha_token: str | None = None
+    captcha_answer: str | None = None
 
 
 class QuestionResultOut(BaseModel):

@@ -3,6 +3,7 @@
 import { ref, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { login, register } from '../auth';
+import CaptchaBox from '../components/CaptchaBox.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -24,7 +25,18 @@ const loading = ref(false);
 const cooldown = ref(0);
 let cooldownTimer = null;
 
+// Капча: при регистрации — всегда; при входе — по требованию сервера.
+const captcha = ref({ token: null, answer: '' });
+const captchaNeeded = ref(false);
+const captchaBox = ref(null);
+// На регистрации капча показывается сразу; при входе — до первой неудачи скрыта.
+const showCaptcha = computed(() => mode.value === 'register' || captchaNeeded.value);
+
 const buttonDisabled = computed(() => loading.value || cooldown.value > 0);
+
+function onCaptchaChange(v) {
+  captcha.value = v;
+}
 
 function startCooldown(seconds) {
   cooldown.value = Math.max(1, Math.ceil(seconds || 0));
@@ -36,6 +48,16 @@ function startCooldown(seconds) {
       cooldownTimer = null;
     }
   }, 1000);
+}
+
+function switchMode() {
+  mode.value = mode.value === 'login' ? 'register' : 'login';
+  error.value = '';
+  success.value = '';
+  captchaNeeded.value = false;
+  captcha.value = { token: null, answer: '' };
+  // Пересоздаём задачу под новую форму (если блок виден — компонент загрузит сам).
+  captchaBox.value?.reset?.();
 }
 
 async function submit() {
@@ -53,13 +75,13 @@ async function submit() {
     if (!form.value.username.trim() || !form.value.email.trim()
         || !form.value.first_name.trim() || !form.value.last_name.trim()) {
       error.value = 'Заполните все обязательные поля';
-            return;
+      return;
     }
   }
   loading.value = true;
   try {
     if (mode.value === 'login') {
-      await login(form.value.username, form.value.password);
+      await login(form.value.username, form.value.password, captcha.value);
       const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/profile';
       router.push(redirect);
     } else {
@@ -70,11 +92,15 @@ async function submit() {
         first_name: form.value.first_name,
         last_name: form.value.last_name,
         pd_consent: pdConsent.value,
+        captcha_token: captcha.value.token,
+        captcha_answer: captcha.value.answer,
       });
       // Регистрация больше не логинит: показываем сообщение об ожидании подтверждения
       success.value = res?.message || 'Заявка на регистрацию отправлена. Дождитесь подтверждения администратором.';
-            mode.value = 'login';
+      mode.value = 'login';
       form.value.password = '';
+      captchaNeeded.value = false;
+      captcha.value = { token: null, answer: '' };
     }
   } catch (e) {
     error.value = e.message || 'Ошибка';
@@ -82,6 +108,13 @@ async function submit() {
     if (e.status === 429) {
       const retry = Number(e.retryAfter || e.data?.retry_after || 0);
       startCooldown(retry || 30);
+    }
+    // Сервер требует капчу (например, 3-я попытка входа) — показываем и обновляем задачу.
+    if (e.captchaRequired) {
+      captchaNeeded.value = true;
+      captcha.value = { token: null, answer: '' };
+      // Ждём рендер блока, затем просим новую задачу.
+      setTimeout(() => captchaBox.value?.refresh?.(), 0);
     }
   } finally {
     loading.value = false;
@@ -118,7 +151,7 @@ async function submit() {
                 <input v-model="form.password" type="password" id="password" name="password"
                        placeholder="Введите пароль" required />
             </div>
-            <div v-if="mode === 'register'" class="login-consent">
+                        <div v-if="mode === 'register'" class="login-consent">
                 <label class="consent-label">
                     <input type="checkbox" v-model="pdConsent" />
                     <span>
@@ -127,7 +160,12 @@ async function submit() {
                     </span>
                 </label>
             </div>
-                        <p v-if="success" class="login-success">{{ success }}</p>
+            <CaptchaBox
+                v-if="showCaptcha"
+                ref="captchaBox"
+                @change="onCaptchaChange"
+            />
+            <p v-if="success" class="login-success">{{ success }}</p>
             <p v-if="error" class="login-error">{{ error }}</p>
             <div class="button-submit">
                 <button type="submit" :disabled="buttonDisabled">
@@ -136,7 +174,7 @@ async function submit() {
                     <template v-else>{{ mode === 'login' ? 'Войти' : 'Зарегистрироваться' }}</template>
                 </button>
             </div>
-            <button type="button" class="toggle-mode" @click="mode = mode === 'login' ? 'register' : 'login'">
+            <button type="button" class="toggle-mode" @click="switchMode">
                 {{ mode === 'login' ? 'Нет аккаунта? Зарегистрироваться' : 'Уже есть аккаунт? Войти' }}
             </button>
         </form>

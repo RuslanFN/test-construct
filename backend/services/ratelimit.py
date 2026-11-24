@@ -42,6 +42,11 @@ def keys_register(ip: str, username: str) -> tuple[str, ...]:
     return (f'ip:{ip}', f'reg:{username.strip().lower()}')
 
 
+def keys_captcha(ip: str) -> tuple[str, ...]:
+    """Выдача задачи «я не робот»: лимит по IP (анти-спам запросами задач)."""
+    return (f'captcha:{ip}',)
+
+
 def keys_submit(ip: str, public_token: str) -> tuple[str, ...]:
     """Прохождение теста: лимит по паре IP|public_token и суммарно по IP."""
     return (f'test:{ip}|{public_token}', f'submit-ip:{ip}')
@@ -91,6 +96,19 @@ def remaining(*keys: str) -> float:
         (_locked_until[k] - now for k in keys if _locked_until.get(k, 0) > now),
         default=0.0,
     )
+
+
+def count(*keys: str, window: int = WINDOW_SECONDS) -> int:
+    """Сколько операций по ключу за окно (макс. по всем ключам).
+
+    Нужно, например, чтобы решить, требовать ли капчу: если по IP или логину
+    уже было N неудачных входов — капча обязательна.
+    """
+    best = 0
+    for key in keys:
+        _prune(key, window)
+        best = max(best, len(_hits.get(key, ())))
+    return best
 
 
 def _prune(key: str, window: int) -> None:

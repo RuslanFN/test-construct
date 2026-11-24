@@ -4,9 +4,10 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 
 import config
 from db import get_db
+from schemas.captcha import CaptchaOut
 from schemas.user import UserCreate, UserLogin, UserPublic
 from security import create_access_token, create_refresh_token, decode_refresh_token
-from services import ratelimit
+from services import captcha, ratelimit
 from services.deps import get_current_user
 from services.http_client import client_ip
 from services.user_service import authenticate, create_user, delete_user, user_to_public
@@ -18,6 +19,11 @@ REGISTER_WINDOW = 600      # окно антиспама регистрации,
 REGISTER_LIMIT = 3         # заявок за окно с одного IP / на один логин
 LOGIN_WINDOW = 300         # окно подсчёта неудачных входов, сек
 LOGIN_LIMIT = 5            # неудачных попыток до блокировки
+# С какой неудачи требовать капчу на вход: после 2 неудач (т.е. с 3-го запроса)
+CAPTCHA_LOGIN_AFTER_FAILS = 2
+# Лимит на выдачу капчи (анти-спам запросами задач)
+CAPTCHA_WINDOW = 600
+CAPTCHA_LIMIT = 60
 
 
 def _too_many(exc: ratelimit.TooManyAttempts) -> HTTPException:
@@ -27,6 +33,29 @@ def _too_many(exc: ratelimit.TooManyAttempts) -> HTTPException:
         str(exc),
         headers={'Retry-After': str(exc.retry_after)},
     )
+
+
+def _captcha_required(detail: str = 'captcha_required') -> HTTPException:
+    """400/401 с машиночитаемым кодом: клиент покажет блок капчи и перезапросит задачу."""
+    return HTTPException(
+        status.HTTP_400_BAD_REQUEST,
+        detail={'code': detail, 'message': 'Подтвердите, что вы не робот: решите пример.'},
+    )
+
+
+@router.get('/captcha', response_model=CaptchaOut)
+async def get_captcha(request: Request):
+    """Выдаёт задачу «я не робот». Под общим IP-лимитом, чтобы не спамили выдачей."""
+    keys = ratelimit.keys_captcha(client_ip(request))
+    try:
+        ratelimit.check(*keys)
+    except ratelimit.TooManyAttempts as e:
+        raise _too_many(e)
+    ratelimit.hit(*keys, window=CAPTCHA_WINDOW, limit=CAPTCHA_LIMIT)
+
+    data = captcha.issue()
+    data['expires_in'] = captcha.TTL_SECONDS
+    return data
 
 
 def _set_cookie(response: Response, key: str, value: str, max_age: int) -> None:
@@ -75,6 +104,10 @@ async def register(payload: UserCreate, request: Request):
     except ratelimit.TooManyAttempts as e:
         raise _too_many(e)
 
+    # Капча на регистрацию — всегда.
+    if not captcha.verify(payload.captcha_token, payload.captcha_answer):
+        raise _captcha_required()
+
     await create_user(payload)
     # Учитываем удачную заявку — неудачные (409 валидация) не наказываем,
     # иначе честный пользователь блокируется из-за опечаток.
@@ -94,6 +127,11 @@ async def login(payload: UserLogin, request: Request, response: Response):
         ratelimit.check(*keys)
     except ratelimit.TooManyAttempts as e:
         raise _too_many(e)
+
+    # Капча на вход — начиная с 3-го запроса (после 2 неудач).
+    if ratelimit.count(*keys, window=LOGIN_WINDOW) >= CAPTCHA_LOGIN_AFTER_FAILS:
+        if not captcha.verify(payload.captcha_token, payload.captcha_answer):
+            raise _captcha_required()
 
     try:
         doc = await authenticate(payload.username, payload.password)

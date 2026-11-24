@@ -14,9 +14,14 @@ export function isAuthenticated() {
   return !!authState.user;
 }
 
-export async function login(username, password) {
+export async function login(username, password, captcha = {}) {
   authState.error = null;
-  const user = await api.login({ username, password });
+  const user = await api.login({
+    username,
+    password,
+    captcha_token: captcha.token ?? null,
+    captcha_answer: captcha.answer ?? null,
+  });
   authState.user = user;
   authState.initialized = true;
   return user;
