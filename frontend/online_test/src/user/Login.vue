@@ -1,190 +1,170 @@
-<style lang="css" src="./login.css" />
 <script setup>
-import { ref, computed } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { login, register } from '../auth';
-import CaptchaBox from '../components/CaptchaBox.vue';
+import { ref } from 'vue';
+import { api } from '../api';
 
-const route = useRoute();
-const router = useRouter();
-
-const mode = ref('login'); // 'login' | 'register'
-const form = ref({
-  username: '',
-  password: '',
-  email: '',
-  first_name: '',
-  last_name: '',
+// Арифметическая капча «я не робот»: пример СЛОВАМИ, ответ ЦИФРАМИ.
+// Задача запрашивается у сервера, ответ проверяется на сервере
+// (подписанный одноразовый токен + honeypot).
+const props = defineProps({
+  label: { type: String, default: 'Проверка «я не робот»' },
 });
-const pdConsent = ref(false);
-const error = ref('');
-const success = ref('');
+const emit = defineEmits(['change']); // отдаёт { token, answer, honeypot }
+
+const question = ref('');
+const token = ref('');
+const answer = ref('');
+const honeypot = ref(''); // скрытое поле-ловушка: человек его не видит
 const loading = ref(false);
-// Мягкая защита на клиенте: после 429 (лимит на сервере) кнопка недоступна
-// ещё несколько секунд — заодно отсекает двойные клики и наивные скрипты.
-const cooldown = ref(0);
-let cooldownTimer = null;
+const loaded = ref(false);
+const error = ref('');
 
+function notify() {
+  // Поле type="number" даёт число — приводим к строке (контракт API: строка).
+  emit('change', {
+    token: token.value || null,
 
-
-
-
-
-// Капча: при регистрации — всегда; при входе — по требованию сервера.
-const captcha = ref({ token: null, answer: '', honeypot: null });
-const captchaNeeded = ref(false);
-const captchaBox = ref(null);
-// На регистрации капча показывается сразу; при входе — до первой неудачи скрыта.
-const showCaptcha = computed(() => mode.value === 'register' || captchaNeeded.value);
-
-const buttonDisabled = computed(() => loading.value || cooldown.value > 0);
-
-function onCaptchaChange(v) {
-  captcha.value = v;
+    answer: answer.value === '' || answer.value === null ? '' : String(answer.value),
+    honeypot: honeypot.value || null,
+  });
 }
 
-function startCooldown(seconds) {
-  cooldown.value = Math.max(1, Math.ceil(seconds || 0));
-  if (cooldownTimer) clearInterval(cooldownTimer);
-  cooldownTimer = setInterval(() => {
-    cooldown.value -= 1;
-    if (cooldown.value <= 0) {
-      clearInterval(cooldownTimer);
-      cooldownTimer = null;
-    }
-  }, 1000);
-}
-
-function switchMode() {
-  mode.value = mode.value === 'login' ? 'register' : 'login';
-  error.value = '';
-  success.value = '';
-
-
-
-    captchaNeeded.value = false;
-  captcha.value = { token: null, answer: '', honeypot: null };
-  // Пересоздаём задачу под новую форму (если блок виден — компонент загрузит сам).
-  captchaBox.value?.reset?.();
-}
-
-async function submit() {
-  error.value = '';
-  success.value = '';
-  if (mode.value === 'register') {
-    if (!pdConsent.value) {
-      error.value = 'Необходимо согласие на обработку персональных данных';
-      return;
-    }
-    if ((form.value.password || '').length < 8) {
-      error.value = 'Пароль должен содержать не менее 8 символов';
-      return;
-    }
-    if (!form.value.username.trim() || !form.value.email.trim()
-        || !form.value.first_name.trim() || !form.value.last_name.trim()) {
-      error.value = 'Заполните все обязательные поля';
-      return;
-    }
-  }
+async function load() {
   loading.value = true;
+  loaded.value = false;
+  error.value = '';
+  answer.value = '';
   try {
-    if (mode.value === 'login') {
-      await login(form.value.username, form.value.password, captcha.value);
-      const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/profile';
-      router.push(redirect);
-    } else {
-      const res = await register({
-        username: form.value.username,
-        password: form.value.password,
-        email: form.value.email,
-        pd_consent: pdConsent.value,
-        captcha_token: captcha.value.token,
-        captcha_answer: captcha.value.answer,
-      });
-      // Регистрация больше не логинит: показываем сообщение об ожидании подтверждения
-
-
-
-
-
-            success.value = res?.message || 'Заявка на регистрацию отправлена. Дождитесь подтверждения администратором.';
-      mode.value = 'login';
-      form.value.password = '';
-      captchaNeeded.value = false;
-      captcha.value = { token: null, answer: '', honeypot: null };
-    }
+    const data = await api.getCaptcha();
+    question.value = data.question;
+    token.value = data.token;
+    loaded.value = true;
   } catch (e) {
-    error.value = e.message || 'Ошибка';
-    // 429 — серверный лимит: разблокируем кнопку, когда истечёт Retry-After.
-    if (e.captchaRequired) {
-      captchaNeeded.value = true;
-      captcha.value = { token: null, answer: '' };
-      // Ждём рендер блока, затем просим новую задачу.
-      setTimeout(() => captchaBox.value?.refresh?.(), 0);
-    }
+    error.value = e.message || 'Не удалось загрузить задачу';
   } finally {
     loading.value = false;
+    notify();
   }
 }
+
+// После неудачной отправки задача израсходована — обновляем.
+defineExpose({ refresh: load, reset: load });
 </script>
 
 <template>
-    <div class="login-form">
-        <form @submit.prevent="submit">
-            <h1>{{ mode === 'login' ? 'Войти' : 'Регистрация' }}</h1>
-            <div class="login-field">
-                <label for="username">имя пользователя</label>
-                <input id="username" v-model="form.username" type="text" name="username" maxlength="30"
-                       placeholder="Введите имя пользователя" required />
-            </div>
-            <template v-if="mode === 'register'">
-                <div class="login-field">
-                    <label for="email">почта</label>
-                    <input id="email" v-model="form.email" type="email" name="email" maxlength="50"
-                           placeholder="you@mail.ru" required />
-                </div>
-                <div class="login-field">
-                    <label for="first_name">имя</label>
-                    <input id="first_name" v-model="form.first_name" type="text" name="first_name" maxlength="30" required />
-                </div>
-                <div class="login-field">
-                    <label for="last_name">фамилия</label>
-                                        <input id="last_name" v-model="form.last_name" type="text" name="last_name" maxlength="30" required />
-                </div>
-            </template>
-            <div class="password-field">
-                <label for="password">пароль</label>
-                <input v-model="form.password" type="password" id="password" name="password"
-                       placeholder="Введите пароль" required />
-            </div>
-                        <div v-if="mode === 'register'" class="login-consent">
-                <label class="consent-label">
-                    <input type="checkbox" v-model="pdConsent" />
-                    <span>
-                        Я согласен на обработку персональных данных в соответствии с
-                        <a href="#" @click.prevent>политикой конфиденциальности</a>
-                    </span>
-                </label>
-            </div>
-            <CaptchaBox
-                v-if="showCaptcha"
-                ref="captchaBox"
-                @change="onCaptchaChange"
-            />
-            <p v-if="success" class="login-success">{{ success }}</p>
-            <p v-if="error" class="login-error">{{ error }}</p>
-            <div class="button-submit">
-                <button type="submit" :disabled="buttonDisabled">
-                    <template v-if="loading">...</template>
-                    <template v-else-if="cooldown > 0">Подождите {{ cooldown }} с</template>
-                    <template v-else>{{ mode === 'login' ? 'Войти' : 'Зарегистрироваться' }}</template>
-                </button>
-            </div>
-            <button type="button" class="toggle-mode" @click="switchMode">
-                {{ mode === 'login' ? 'Нет аккаунта? Зарегистрироваться' : 'Уже есть аккаунт? Войти' }}
-            </button>
-        </form>
-        </div>
+  <div class="captcha">
+    <label class="captcha-label">{{ label }}</label>
+    <div class="captcha-row">
+      <!-- Задача запрашивается только по нажатию (в конце теста), а не при загрузке -->
+      <button v-if="!loaded && !loading" type="button" class="captcha-start" @click="load">
+        Показать пример
+      </button>
+      <span v-if="loading" class="captcha-q">…</span>
+      <template v-else-if="loaded">
+        <span class="captcha-q">Сколько будет: {{ question }}?</span>
+        <input
+        v-model="answer"
+        type="number"
+        inputmode="numeric"
+        class="captcha-input"
+        placeholder="Ответ"
+        @input="notify"
+      />
+        <button type="button" class="captcha-refresh" title="Другой пример"
+              :disabled="loading" @click="load">⟳</button>
+</template>
+    </div>
+    <p v-if="loaded" class="captcha-hint">Введите ответ цифрами.</p>
+    <!-- Ловушка для ботов: визуально скрыта, человек её не видит и не заполняет -->
+    <div class="captcha-hp" aria-hidden="true">
+      <label for="hp-email">E-mail</label>
+      <input
+        id="hp-email"
+        v-model="honeypot"
+        type="text"
+        name="email"
+        tabindex="-1"
+        autocomplete="off"
+        @input="notify"
+      />
+    </div>
+    <p v-if="error" class="captcha-error">{{ error }}</p>
+  </div>
 </template>
 
+<style scoped>
+.captcha {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.captcha-label {
+  color: #334155;
+}
+.captcha-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.captcha-q {
+  font-size: 15px;
+  color: #0f172a;
+}
+.captcha-input {
+  width: 90px;
+  padding: 10px 12px;
+  font-size: 14px;
+  color: #0f172a;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  outline: none;
+}
+.captcha-input:focus {
+  border-color: #1f6feb;
+  box-shadow: 0 0 0 3px rgba(31, 111, 235, 0.15);
+}
+.captcha-start {
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f6feb;
+  background: #eef4ff;
+  border: 1px solid #c7dbff;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.captcha-refresh {
+  padding: 6px 10px;
+  font-size: 16px;
+  line-height: 1;
+  color: #1f6feb;
+  background: #eef4ff;
+  border: 1px solid #c7dbff;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.captcha-refresh:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.captcha-hint {
+  margin: 0;
+  font-size: 12px;
+  color: #64748b;
+}
+/* Honeypot: уводим за пределы экрана, но оставляем в DOM (боты-парсеры
+   заполняют такие поля, люди — нет). Не display:none — часть ботов пропустит. */
+.captcha-hp {
+  position: absolute;
+  left: -9999px;
+  top: -9999px;
+  height: 0;
+  overflow: hidden;
+}
+.captcha-error {
+  margin: 0;
+  font-size: 13px;
+  color: #b91c1c;
+}
+</style>
 

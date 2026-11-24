@@ -1,12 +1,17 @@
 import re
 import uuid
 from datetime import datetime
+from typing import Annotated
 
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, BeforeValidator, EmailStr, Field, field_validator
 
 from models.user import Role
 
 _EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+
+# Ответ капчи приходит и числом (поле type="number"), и строкой — приводим к строке
+# ДО валидации типа, иначе Pydantic отвергает int для поля str (422).
+_CaptchaAnswer = Annotated[str | None, BeforeValidator(lambda v: None if v is None else str(v))]
 
 
 class UserCreate(BaseModel):
@@ -23,7 +28,9 @@ class UserCreate(BaseModel):
     pd_consent: bool = False
     # проверка «я не робот»: токен задачи и ответ (проверяется в роутере)
     captcha_token: str | None = None
-    captcha_answer: str | None = None
+
+    # ответ цифрами: поле type="number" присылает число — принимаем оба типа
+    captcha_answer: _CaptchaAnswer = None
     # скрытое поле-ловушка (honeypot): человек его не видит, бот заполняет
     captcha_honeypot: str | None = None
 
@@ -84,13 +91,12 @@ class UserCreate(BaseModel):
             raise ValueError('Необходимо согласие на обработку персональных данных')
         return v
 
-
 class UserLogin(BaseModel):
     username: str
     password: str
     # капча требуется сервером (например, после неудачных входов) — необязательна в схеме
     captcha_token: str | None = None
-    captcha_answer: str | None = None
+    captcha_answer: _CaptchaAnswer = None
     # скрытое поле-ловушка (honeypot) для отсева ботов
     captcha_honeypot: str | None = None
 

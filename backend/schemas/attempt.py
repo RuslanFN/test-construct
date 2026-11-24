@@ -2,7 +2,12 @@ import re
 import uuid
 from datetime import datetime
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, BeforeValidator, Field, field_validator
+from typing import Annotated
+
+# Ответ капчи приходит и числом (поле type="number"), и строкой — приводим к строке
+# ДО валидации типа, иначе Pydantic отвергает int для поля str (422).
+_CaptchaAnswer = Annotated[str | None, BeforeValidator(lambda v: None if v is None else str(v))]
 
 
 class ParticipantIn(BaseModel):
@@ -62,7 +67,8 @@ class AttemptSubmit(BaseModel):
     answers: list[GivenAnswer] = Field(default_factory=list)
     # проверка «я не робот» — на каждую отправку (проверяется в роутере)
     captcha_token: str | None = None
-    captcha_answer: str | None = None
+    # ответ вводится цифрами: поле type="number" присылает число — принимаем оба типа
+    captcha_answer: _CaptchaAnswer = None
     # скрытое поле-ловушка (honeypot) для отсева ботов
     captcha_honeypot: str | None = None
 

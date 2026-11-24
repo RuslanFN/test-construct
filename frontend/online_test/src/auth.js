@@ -21,6 +21,7 @@ export async function login(username, password, captcha = {}) {
     password,
     captcha_token: captcha.token ?? null,
     captcha_answer: captcha.answer ?? null,
+    captcha_honeypot: captcha.honeypot ?? null,
   });
   authState.user = user;
   authState.initialized = true;

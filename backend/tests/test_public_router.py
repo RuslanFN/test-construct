@@ -143,6 +143,23 @@ def test_submit_wrong_captcha_rejected(api_client, fake_db):
     assert resp.json()['detail']['code'] == 'captcha_required'
 
 
+def test_submit_captcha_answer_as_number(api_client, fake_db):
+    """Поле type="number" присылает число — схема должна его принять (не 422)."""
+    doc, q, correct, wrong = _published_test_with_one_question(fake_db)
+    campos = _captcha(api_client)
+    campos['captcha_answer'] = int(campos['captcha_answer'])  # число, не строка
+    resp = api_client.post(
+        '/api/public/tests/publictok/submit',
+        json={
+            'participant': _participant_payload(),
+            'answers': [{'question_id': q['id'], 'selected': [correct]}],
+            **campos,
+        },
+    )
+    assert resp.status_code == 200, resp.text
+    assert resp.json()['score'] == 1
+
+
 def test_submit_honeypot_filled_rejected(api_client, fake_db):
     """Заполненное скрытое поле-ловушка — 400, попытка не сохраняется."""
     doc, q, correct, wrong = _published_test_with_one_question(fake_db)
