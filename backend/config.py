@@ -68,6 +68,14 @@ refresh_cookie_max_age = refresh_token_expire_days * 24 * 60 * 60
 
 pd_consent_version = getenv('pd_consent_version', '1.0')
 
+# Политика хранения ПДн (152-ФЗ): попытки старше N дней удаляются фоновым
+# планировщиком внутри приложения. По умолчанию — 30 дней (месяц).
+# 0 полностью выключает очистку (данные хранятся бессрочно — только осознанно).
+attempts_retention_days = int(getenv('attempts_retention_days', '30') or '30')
+# Как часто планировщик проверяет и удаляет устаревшие попытки (часы).
+# 24 — раз в сутки; условие `max(1, ...)` не даёт уйти в плотный цикл.
+retention_check_interval_hours = int(getenv('retention_check_interval_hours', '24') or '24')
+
 # Администратор, создаётся при запуске, если ещё не существует
 
 

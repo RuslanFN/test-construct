@@ -40,6 +40,21 @@ def _match_value(doc_value, cond):
             elif op == '$ne':
                 if doc_value == arg:
                     return False
+            elif op in ('$lt', '$lte', '$gt', '$gte'):
+                # Сравнение (в т.ч. datetime) — используется очисткой по retention.
+                if doc_value is None:
+                    return False
+                try:
+                    if op == '$lt' and not (doc_value < arg):
+                        return False
+                    if op == '$lte' and not (doc_value <= arg):
+                        return False
+                    if op == '$gt' and not (doc_value > arg):
+                        return False
+                    if op == '$gte' and not (doc_value >= arg):
+                        return False
+                except TypeError:
+                    return False
             else:  # неизвестный оператор — считаем несовпадением
                 return False
         return True

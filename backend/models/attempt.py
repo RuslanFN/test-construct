@@ -34,6 +34,18 @@ class Participant(BaseModel):
     certificate_number: str  # номер сертификата, 10 цифр
 
 
+class AttemptConsent(BaseModel):
+    """
+    Согласие на обработку ПДн, зафиксированное при отправке попытки.
+
+    Аналог `PdConsent` у пользователя: хранит факт, дату и версию текста,
+    который был показан участнику (для аудита 152-ФЗ).
+    """
+    granted: bool = False
+    granted_at: datetime | None = None
+    version: str | None = None
+
+
 class Attempt(BaseModel):
     """
     Попытка прохождения теста (коллекция `attempts`).
@@ -49,6 +61,9 @@ class Attempt(BaseModel):
     user_id: uuid.UUID | None = None
     guest_name: str | None = None  # legacy, больше не заполняется
     participant: Participant | None = None
+
+    # согласие на обработку ПДн участника (или его законного представителя)
+    pd_consent: AttemptConsent = Field(default_factory=AttemptConsent)
 
     score: int = 0          # количество правильных
     total: int = 0          # всего вопросов

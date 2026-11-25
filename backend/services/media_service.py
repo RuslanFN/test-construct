@@ -2,6 +2,7 @@ import io
 import logging
 import os
 import uuid
+import warnings
 from pathlib import Path
 
 from fastapi import HTTPException, status
@@ -16,6 +17,11 @@ log = logging.getLogger(__name__)
 # Файлы до 5 МБ: в БД и в проекте всего 5 ГБ, поэтому лимит жёсткий.
 MAX_SIZE = 5 * 1024 * 1024
 CHUNK = 64 * 1024
+
+# Бомба декомпрессии: лимит по байтам НЕ защищает от картинки 11000x11000
+# весом 117 КБ — при распаковке это ~600 МБ памяти. Ограничиваем число пикселей.
+# 24 Мп ≈ 6000x4000: с запасом под фото с телефона, но без гигабайтов в RAM.
+MAX_PIXELS = 24_000_000
 
 # Разрешённые форматы. SVG сознательно НЕ разрешён: его можно отрисовать
 # как скрипт (XSS), а magic-bytes для SVG ненадёжны.
@@ -34,6 +40,33 @@ def media_dir() -> Path:
     return path
 
 
+def _open_image(data: bytes) -> Image.Image:
+    """
+    Открывает изображение, превращая всё «нестандартное» в один 400.
+
+    DecompressionBombWarning (выше ~89 Мп) переводим в исключение: Pillow по
+    умолчанию только предупреждает и картинку-бомбу бы пропустил.
+    """
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', Image.DecompressionBombWarning)
+        try:
+            # verify() ловит битые/поддельные файлы, но после него объект
+            # непригоден для чтения — поэтому открываем заново.
+            Image.open(io.BytesIO(data)).verify()
+            return Image.open(io.BytesIO(data))
+        except (
+            UnidentifiedImageError,
+            OSError,
+            ValueError,
+            Image.DecompressionBombWarning,
+            Image.DecompressionBombError,
+        ):
+            raise HTTPException(
+                status.HTTP_400_BAD_REQUEST,
+                'Файл не является изображением поддерживаемого формата',
+            )
+
+
 def _detect_image(data: bytes) -> tuple[str, str, int, int]:
     """
     Определяет формат по СОДЕРЖИМОМУ (magic bytes через Pillow), а не по
@@ -41,23 +74,22 @@ def _detect_image(data: bytes) -> tuple[str, str, int, int]:
 
     Возвращает (content_type, extension, width, height).
     """
-    try:
-        # verify() ловит битые/поддельные файлы, но после него объект
-        # непригоден для чтения — поэтому открываем заново.
-        probe = Image.open(io.BytesIO(data))
-        probe.verify()
-        img = Image.open(io.BytesIO(data))
-        fmt = (img.format or '').upper()
-    except (UnidentifiedImageError, OSError, ValueError):
-        raise HTTPException(
-            status.HTTP_400_BAD_REQUEST,
-            'Файл не является изображением поддерживаемого формата',
-        )
+    img = _open_image(data)
+    fmt = (img.format or '').upper()
 
     if fmt not in ALLOWED_FORMATS:
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST,
             'Недопустимый формат изображения. Разрешены: PNG, JPEG, WEBP',
+        )
+
+    # Размеры (и число пикселей) берутся из заголовка, распаковка ещё не шла —
+    # поэтому отказываем дешёво, не тратя память.
+    if img.width * img.height > MAX_PIXELS:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            f'Слишком большое разрешение изображения: {img.width}x{img.height} '
+            f'(максимум {MAX_PIXELS // 1_000_000} Мп)',
         )
 
     content_type, ext = ALLOWED_FORMATS[fmt]
@@ -78,10 +110,18 @@ def save_path(stored_name: str) -> Path:
     return target
 
 
-async def store_media(data: bytes, original_name: str, user_id: uuid.UUID) -> dict:
+async def store_media(
+    data: bytes,
+    original_name: str,
+    user_id: uuid.UUID | None = None,
+) -> dict:
     """
     Проверяет и сохраняет изображение. `data` уже прочитан с жёстким лимитом
     размера на уровне роутера, но размер перепроверяем и здесь.
+
+    `user_id` = None — загрузка без аккаунта (например, участником с публичной
+    страницы теста). Все проверки безопасности от способа аутентификации не
+    зависят: они внутри этой функции.
     """
     if not data:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, 'Пустой файл')
@@ -110,7 +150,7 @@ async def store_media(data: bytes, original_name: str, user_id: uuid.UUID) -> di
     doc['_id'] = doc.pop('id')
     await get_db()['media'].insert_one(doc)
     log.info('Загружено медиа %s (%s, %d байт) пользователем %s',
-             media.id, content_type, len(data), user_id)
+             media.id, content_type, len(data), user_id or 'без аккаунта')
     return doc
 
 
@@ -139,10 +179,16 @@ async def delete_media_files(media_ids: list[uuid.UUID]) -> None:
     await db['media'].delete_many({'_id': {'$in': ids}})
 
 
-async def delete_media(media_id: uuid.UUID, user_id: uuid.UUID, is_admin: bool = False) -> None:
+async def delete_media(
+    media_id: uuid.UUID,
+    user_id: uuid.UUID | None,
+    is_admin: bool = False,
+) -> None:
     doc = await get_media(media_id)
     if doc is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, 'Файл не найден')
-    if not is_admin and doc.get('uploaded_by') != user_id:
+    # Явная проверка user_id: файл без владельца (загрузка без аккаунта)
+    # «своим» не становится, иначе владельцем оказался бы любой аноним.
+    if not is_admin and (user_id is None or doc.get('uploaded_by') != user_id):
         raise HTTPException(status.HTTP_403_FORBIDDEN, 'Нет доступа к этому файлу')
     await delete_media_files([media_id])

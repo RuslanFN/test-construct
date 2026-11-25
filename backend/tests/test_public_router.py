@@ -24,6 +24,8 @@ def _participant_payload():
         'first_name': 'Иван',
         'middle_name': None,
         'certificate_number': '1234567890',
+        # согласие на обработку ПДн обязательно (чекбокс в интерфейсе)
+        'pd_consent': True,
     }
 
 
@@ -185,6 +187,41 @@ def test_submit_invalid_participant_422(api_client, fake_db):
         json={'participant': bad, 'answers': []},
     )
     assert resp.status_code == 422
+
+
+def test_submit_without_consent_422(api_client, fake_db):
+    """Без согласия на обработку ПДн попытка не принимается и не сохраняется."""
+    doc, q, correct, wrong = _published_test_with_one_question(fake_db)
+    bad = _participant_payload()
+    bad['pd_consent'] = False
+    resp = api_client.post(
+        '/api/public/tests/publictok/submit',
+        json={
+            'participant': bad,
+            'answers': [{'question_id': q['id'], 'selected': [correct]}],
+            **_captcha(api_client),
+        },
+    )
+    assert resp.status_code == 422
+    assert 'согласие' in resp.json()['detail'].lower()
+    assert len(fake_db['attempts']._docs) == 0
+
+
+def test_submit_consent_missing_422(api_client, fake_db):
+    """Поле pd_consent отсутствует (чекбокс не отмечен) — тоже 422."""
+    doc, q, correct, wrong = _published_test_with_one_question(fake_db)
+    bad = _participant_payload()
+    bad.pop('pd_consent')
+    resp = api_client.post(
+        '/api/public/tests/publictok/submit',
+        json={
+            'participant': bad,
+            'answers': [{'question_id': q['id'], 'selected': [correct]}],
+            **_captcha(api_client),
+        },
+    )
+    assert resp.status_code == 422
+    assert len(fake_db['attempts']._docs) == 0
 
 
 def test_submit_to_draft_404(api_client, fake_db):

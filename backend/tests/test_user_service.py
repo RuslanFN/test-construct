@@ -78,6 +78,27 @@ async def test_authenticate_unknown_user(fake_db):
     assert e.value.status_code == 401
 
 
+async def test_authenticate_unknown_user_still_verifies(fake_db, monkeypatch):
+    """Для несуществующего логина bcrypt всё равно вызывается.
+
+    Иначе по времени ответа видно, зарегистрирован ли логин (user enumeration).
+    Проверяем сам факт вызова, а не тайминги: они в тестах нестабильны.
+    """
+    calls = []
+
+    def fake_verify(plain: str, hashed: str) -> bool:
+        calls.append(hashed)
+        return False
+
+    monkeypatch.setattr(user_service, 'verify_password', fake_verify)
+    with pytest.raises(HTTPException):
+        await user_service.authenticate('nobody-here', 'x')
+
+    # проверки — ПОСЛЕ вызова, иначе они выполняются внутри pytest.raises
+    assert len(calls) == 1
+    assert calls[0]  # передан эталонный хэш, а не пустая строка
+
+
 async def test_authenticate_pending(fake_db):
     fake_db['users']._docs.append(
         make_user_doc(username='p', approval_status='pending', is_active=False)

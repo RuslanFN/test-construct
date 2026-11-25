@@ -1,4 +1,6 @@
-from contextlib import asynccontextmanager
+import asyncio
+import logging
+from contextlib import asynccontextmanager, suppress
 
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
@@ -10,6 +12,9 @@ import config  # noqa: F401  (настраивает логирование)
 import db
 import seed
 from routers import auth_router, public_router, tests_router, admin_router, media_router, debug_router
+from services import retention
+
+log = logging.getLogger(__name__)
 
 
 # Перевод типовых сообщений валидации Pydantic на русский
@@ -28,7 +33,25 @@ _VALIDATION_RU = {
 async def lifespan(app: FastAPI):
     await db.ensure_indexes()
     await seed.ensure_admin()
+
+    # Планировщик очистки ПДн по политике хранения: при старте и далее раз в
+    # сутки удаляет попытки старше `attempts_retention_days` (по умолчанию 30
+    # дней). `0` — очистку выключили осознанно, данные не трогаем.
+    retention_task: asyncio.Task | None = None
+    if config.attempts_retention_days > 0:
+        retention_task = asyncio.create_task(retention.retention_worker())
+        log.info(
+            'Retention: очистка включена, срок хранения %s дн., проверка каждые %s ч.',
+            config.attempts_retention_days,
+            max(1, config.retention_check_interval_hours),
+        )
+
     yield
+
+    if retention_task is not None:
+        retention_task.cancel()
+        with suppress(asyncio.CancelledError):
+            await retention_task
     await db.close_client()
 
 

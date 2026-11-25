@@ -16,4 +16,5 @@ run:
 #   mongo_host, mongo_port, mongo_username, mongo_password, mongo_db_name,
 #   jwt_secret (>=32 символов), admin_username, admin_email, admin_password,
 #   cookie_secure=true, cookie_samesite=strict, log_level=INFO
+#   (необязательно) attempts_retention_days=30, retention_check_interval_hours=24
 # Секреты (jwt_secret, admin_password, mongo_password) — с галочкой «Секрет».

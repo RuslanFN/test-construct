@@ -82,6 +82,8 @@ async def ensure_indexes() -> None:
     await get_db()['tests'].create_index('public_token', unique=True, sparse=True)
     await get_db()['attempts'].create_index('test_id')
     await get_db()['attempts'].create_index('user_id')
+    # по created_at работает фоновая очистка по политике хранения (retention)
+    await get_db()['attempts'].create_index('created_at')
     await get_db()['media'].create_index('uploaded_by')
 
 

@@ -2,7 +2,7 @@ import re
 import uuid
 from datetime import datetime
 
-from pydantic import BaseModel, BeforeValidator, Field, field_validator
+from pydantic import BaseModel, BeforeValidator, Field, field_validator, model_validator
 from typing import Annotated
 
 # Ответ капчи приходит и числом (поле type="number"), и строкой — приводим к строке
@@ -16,6 +16,9 @@ class ParticipantIn(BaseModel):
     first_name: str
     middle_name: str | None = None
     certificate_number: str
+    # Согласие на обработку ПДн (152-ФЗ). Чекбокс в интерфейсе НЕ отмечен
+    # по умолчанию: сервер принимает отправку только при явном согласии.
+    pd_consent: bool = False
 
     @field_validator('last_name', 'first_name')
     @classmethod
@@ -44,6 +47,14 @@ class ParticipantIn(BaseModel):
         if not re.fullmatch(r'\d{10}', v):
             raise ValueError('Номер сертификата должен состоять из 10 цифр')
         return v
+
+    @model_validator(mode='after')
+    def consent_required(self) -> 'ParticipantIn':
+        # Проверяем ПОСЛЕ подстановки значений по умолчанию: иначе отсутствующее
+        # поле молча стало бы False и согласие можно было бы не давать.
+        if not self.pd_consent:
+            raise ValueError('Необходимо согласие на обработку персональных данных')
+        return self
 
 
 class ParticipantOut(BaseModel):

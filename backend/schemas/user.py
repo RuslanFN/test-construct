@@ -3,7 +3,7 @@ import uuid
 from datetime import datetime
 from typing import Annotated
 
-from pydantic import BaseModel, BeforeValidator, EmailStr, Field, field_validator
+from pydantic import BaseModel, BeforeValidator, EmailStr, Field, field_validator, model_validator
 
 from models.user import Role
 
@@ -84,12 +84,13 @@ class UserCreate(BaseModel):
             raise ValueError('Значение слишком длинное (максимум 30 символов)')
         return v or None
 
-    @field_validator('pd_consent')
-    @classmethod
-    def consent_required(cls, v: bool) -> bool:
-        if not v:
+    @model_validator(mode='after')
+    def consent_required(self) -> 'UserCreate':
+        # Проверяем ПОСЛЕ подстановки значений по умолчанию: иначе отсутствующее
+        # поле молча стало бы False и регистрация прошла бы без согласия.
+        if not self.pd_consent:
             raise ValueError('Необходимо согласие на обработку персональных данных')
-        return v
+        return self
 
 class UserLogin(BaseModel):
     username: str

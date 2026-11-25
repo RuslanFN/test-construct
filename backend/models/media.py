@@ -19,5 +19,5 @@ class MediaFile(BaseModel):
     size: int                     # байт
     width: int | None = None
     height: int | None = None
-    uploaded_by: uuid.UUID        # владелец файла
+    uploaded_by: uuid.UUID | None = None  # None — загрузка без аккаунта (участник)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

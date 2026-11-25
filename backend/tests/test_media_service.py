@@ -166,3 +166,12 @@ async def test_delete_media_not_found_404(fake_db):
     with pytest.raises(HTTPException) as e:
         await media_service.delete_media(uuid.uuid4(), uuid.uuid4(), is_admin=True)
     assert e.value.status_code == 404
+
+
+async def test_delete_media_anonymous_upload_forbidden(fake_db):
+    """Файл без владельца (загрузка без аккаунта) «своим» для удаления не станет."""
+    doc = await media_service.store_media(_png_bytes(), 'x.png', None)
+    with pytest.raises(HTTPException) as e:
+        await media_service.delete_media(doc['_id'], None, is_admin=False)
+    assert e.value.status_code == 403
+

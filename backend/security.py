@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+import secrets
 
 import jwt
 from passlib.context import CryptContext
@@ -7,6 +8,10 @@ import config
 
 pwd_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
 
+# Эталонный хэш-«пустышка» для случаев, когда проверять нечего (логин не найден).
+# Считаем его лениво: hash — дорогая операция, а импорт модуля должен быть дешёвым.
+_stub_hash: str | None = None
+
 
 def hash_password(password: str) -> str:
     return pwd_context.hash(password)
@@ -14,6 +19,14 @@ def hash_password(password: str) -> str:
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
+
+
+def stub_hash() -> str:
+    """Валидный bcrypt-хэш от случайного пароля (никогда не совпадёт)."""
+    global _stub_hash
+    if _stub_hash is None:
+        _stub_hash = pwd_context.hash(secrets.token_urlsafe(24))
+    return _stub_hash
 
 
 def create_access_token(subject: str) -> str:

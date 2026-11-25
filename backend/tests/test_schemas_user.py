@@ -95,6 +95,15 @@ def test_consent_required():
     assert 'согласие' in str(e.value).lower()
 
 
+def test_consent_missing_rejected():
+    """Отсутствующее поле pd_consent не должно проходить (дефолт False)."""
+    data = _base()
+    data.pop('pd_consent')
+    with pytest.raises(ValidationError) as e:
+        UserCreate(**data)
+    assert 'согласие' in str(e.value).lower()
+
+
 def test_role_is_ignored_for_public_registration():
     # role в модели есть, но сервис всё равно ставит методиста (проверяется в user_service)
     u = UserCreate(**_base(role='admin'))

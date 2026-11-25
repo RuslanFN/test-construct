@@ -7,6 +7,13 @@ import '../components/carousel.css';
 
 const props = defineProps({ token: { type: String, required: true } });
 
+// Политика в отношении обработки персональных данных (на неё ссылается согласие).
+const policyUrl = 'https://disk.yandex.ru/i/o7dzQkHBFOsuMg';
+
+// Согласие на обработку ПДн: по умолчанию НЕ отмечено (152-ФЗ).
+// Без него отправка заблокирована и на клиенте, и на сервере.
+const pdConsent = ref(false);
+
 const test = ref(null);
 const loading = ref(true);
 const error = ref('');
@@ -234,6 +241,8 @@ const canSubmit = computed(() => {
   const p = participant.value;
   if (!p.last_name.trim() || !p.first_name.trim()) return false;
   if (!/^\d{10}$/.test(p.certificate_number.trim())) return false;
+  // согласие на обработку ПДн обязательно (чекбокс не отмечен по умолчанию)
+  if (!pdConsent.value) return false;
   for (const q of test.value.questions) {
     if (!q.required) continue;
     const a = answers.value[q.id];
@@ -262,6 +271,7 @@ async function submit() {
         first_name: participant.value.first_name.trim(),
         middle_name: participant.value.middle_name.trim() || null,
         certificate_number: participant.value.certificate_number.trim(),
+        pd_consent: pdConsent.value,
       },
       answers: Object.entries(answers.value).map(([qid, a]) => ({
         question_id: qid,
@@ -309,6 +319,7 @@ watch(
     answers.value = {};
 
     participant.value = { last_name: '', first_name: '', middle_name: '', certificate_number: '' };
+    pdConsent.value = false;
     captcha.value = { token: null, answer: '', honeypot: null };
     captchaOpen.value = false;
     captchaBox.value?.reset?.();
@@ -370,6 +381,19 @@ watch(
               placeholder="10 цифр"
               @input="participant.certificate_number = participant.certificate_number.replace(/\D/g, '').slice(0, 10)"
             />
+          </label>
+        </div>
+
+        <div class="take-consent">
+          <label class="take-consent-label">
+            <input type="checkbox" v-model="pdConsent" />
+            <span>
+              Я подтверждаю, что являюсь законным представителем несовершеннолетнего
+              (или действую с его согласия), и даю согласие на обработку персональных
+              данных в соответствии с
+              <a :href="policyUrl" target="_blank" rel="noopener noreferrer">Политикой
+              в отношении обработки персональных данных</a>
+            </span>
           </label>
         </div>
       </div>

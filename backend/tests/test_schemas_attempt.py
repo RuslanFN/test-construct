@@ -11,6 +11,7 @@ def _participant(**over):
         first_name='Иван',
         middle_name=None,
         certificate_number='1234567890',
+        pd_consent=True,
     )
     data.update(over)
     return data
@@ -60,6 +61,21 @@ def test_certificate_non_numeric():
     with pytest.raises(ValidationError) as e:
         ParticipantIn(**_participant(certificate_number='12345abcde'))
     assert '10 цифр' in str(e.value)
+
+
+def test_consent_required():
+    """Без согласия на обработку ПДн участник не проходит валидацию."""
+    with pytest.raises(ValidationError) as e:
+        ParticipantIn(**_participant(pd_consent=False))
+    assert 'согласие' in str(e.value)
+
+
+def test_consent_missing_defaults_to_false_and_rejected():
+    """Не переданное поле тоже отклоняется (чекбокс не отмечен по умолчанию)."""
+    data = _participant()
+    data.pop('pd_consent')
+    with pytest.raises(ValidationError):
+        ParticipantIn(**data)
 
 
 def test_attempt_submit_structure():

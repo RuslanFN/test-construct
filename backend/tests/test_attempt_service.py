@@ -15,6 +15,7 @@ def _participant(**over):
         first_name='Иван',
         middle_name=None,
         certificate_number='1234567890',
+        pd_consent=True,
     )
     data.update(over)
     return ParticipantIn(**data)
@@ -231,6 +232,9 @@ async def test_percent_and_persistence(fake_db):
     saved = fake_db['attempts']._docs[0]
     assert saved['score'] == 1
     assert saved['participant']['last_name'] == 'Иванов'
+    # согласие на обработку ПДн зафиксировано в документе попытки
+    assert saved['pd_consent']['granted'] is True
+    assert saved['pd_consent']['granted_at'] is not None
     # веса у question_id в исходном формате
     assert all('question_id' in r for r in saved['results'])
 

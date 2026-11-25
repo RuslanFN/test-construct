@@ -157,7 +157,7 @@ async function submit() {
                     <input type="checkbox" v-model="pdConsent" />
                     <span>
                         Я согласен на обработку персональных данных в соответствии с
-                        <a href="#" @click.prevent>политикой конфиденциальности</a>
+                        <a href="https://disk.yandex.ru/i/o7dzQkHBFOsuMg" target="_blank" rel="noopener noreferrer">политикой конфиденциальности</a>
                     </span>
                 </label>
             </div>

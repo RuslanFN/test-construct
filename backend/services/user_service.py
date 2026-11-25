@@ -9,7 +9,7 @@ from db import get_db
 
 from models.user import ApprovalStatus, PdConsent, Role, User
 from schemas.user import UserCreate, UserPublic
-from security import hash_password, verify_password
+from security import hash_password, stub_hash, verify_password
 
 
 def user_to_public(doc: dict) -> UserPublic:
@@ -63,7 +63,11 @@ async def create_user(payload: UserCreate) -> dict:
 
 async def authenticate(username: str, password: str) -> dict:
     user = await get_db()['users'].find_one({'username': username})
-    if user is None or not verify_password(password, user['hashed_password']):
+    # bcrypt сверяется ВСЕГДА: если пропускать проверку для несуществующего
+    # логина, по времени ответа видно, зарегистрирован ли он (user enumeration).
+    hashed = user['hashed_password'] if user else stub_hash()
+    password_ok = verify_password(password, hashed)
+    if user is None or not password_ok:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, 'Неверный логин или пароль')
 
     approval = user.get('approval_status', ApprovalStatus.APPROVED.value)

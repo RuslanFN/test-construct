@@ -20,6 +20,9 @@ os.environ.setdefault('MONGO_USERNAME', 'u')
 os.environ.setdefault('MONGO_PASSWORD', 'p')
 os.environ.setdefault('COOKIE_SECURE', 'false')
 os.environ.setdefault('PD_CONSENT_VERSION', '1.0')
+# Фоновая очистка (retention) в тестах выключается: иначе планировщик в lifespan
+# удалял бы попытки между тестами. Дефолт в проде — 30 дней (см. config.py).
+os.environ.setdefault('ATTEMPTS_RETENTION_DAYS', '0')
 
 # backend/ в sys.path, чтобы импорты вида "import config", "from services..." работали
 BACKEND_DIR = Path(__file__).resolve().parent.parent

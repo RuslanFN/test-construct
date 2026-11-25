@@ -21,6 +21,16 @@ def test_hash_is_salted():
     assert security.verify_password('same', b)
 
 
+def test_stub_hash_is_valid_bcrypt_and_matches_nothing():
+    """Пустышка для несуществующих логинов: валидный bcrypt, но ни с чем не совпадёт."""
+    h = security.stub_hash()
+    assert h != ''
+    assert security.verify_password('password123', h) is False
+    assert security.verify_password('', h) is False
+    # хэш кэшируется: повторный вызов не пересчитывает bcrypt
+    assert security.stub_hash() == h
+
+
 def test_access_token_roundtrip():
     token = security.create_access_token('user-123')
     assert security.decode_access_token(token) == 'user-123'
@@ -65,3 +75,4 @@ def test_expired_token_rejected(monkeypatch):
     }
     token = jwt.encode(expired_payload, config.secret_key, algorithm=config.jwt_algorithm)
     assert security.decode_access_token(token) is None
+

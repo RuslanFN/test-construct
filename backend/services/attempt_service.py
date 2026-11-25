@@ -1,13 +1,15 @@
 import io
 import uuid
+from datetime import datetime, timezone
 from typing import Any
 
 from fastapi import HTTPException, status
 from openpyxl import Workbook
 from openpyxl.styles import Font
 
+import config
 from db import get_db
-from models.attempt import Attempt, Participant, QuestionResult
+from models.attempt import Attempt, AttemptConsent, Participant, QuestionResult
 from models.question_type import QuestionType
 from schemas.attempt import (
     AttemptDetail,
@@ -149,6 +151,13 @@ async def submit_attempt(
             first_name=payload.participant.first_name,
             middle_name=payload.participant.middle_name,
             certificate_number=payload.participant.certificate_number,
+        ),
+        # Фиксируем факт согласия в самой попытке: даже если текст политики
+        # позже изменится, останется дата и версия того, что принял участник.
+        pd_consent=AttemptConsent(
+            granted=True,
+            granted_at=datetime.now(timezone.utc),
+            version=config.pd_consent_version,
         ),
         score=score,
         total=total,

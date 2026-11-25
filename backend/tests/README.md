@@ -34,7 +34,7 @@ python -m pytest tests/test_attempt_service.py::test_submit_one_correct
 | `fakedb.py` | In-memory async-эмулятор коллекций pymongo (инфраструктура) |
 | `conftest.py` | Env, патч `get_db`, фикстуры (`api_client`, `fake_db`, ...) |
 | `test_health.py` | Приложение поднимается, `/api/health`, lifespan создаёт админа |
-| `test_security.py` | bcrypt-хеши, JWT access/refresh, типы токенов, подпись, истечение |
+| `test_security.py` | bcrypt-хеши, `stub_hash` (bcrypt всегда сверяется), JWT access/refresh, типы токенов, подпись, истечение |
 | `test_env.py` | Чтение env без учёта регистра, кавычки, алиасы |
 | `test_ratelimit.py` | Лимит попыток входа, блокировка, сброс, изоляция ключей |
 | `test_schemas_user.py` | Валидация регистрации (логин/почта/пароль/ФИО/согласие) |
@@ -46,6 +46,7 @@ python -m pytest tests/test_attempt_service.py::test_submit_one_correct
 | `test_attempt_service.py` | Проверка ответов all типов, обязательные, подсчёт, детали, Excel |
 | `test_admin_service.py` | Поиск тестов, управление учётками, защита служебной учётки |
 | `test_media_service.py` | Детект формата, лимиты, path traversal, сохранение/удаление, права |
+| `test_image_bomb.py` | Бомба декомпрессии (лимит `MAX_PIXELS`), анонимная загрузка |
 | `test_seed.py` | Создание/синхронизация администратора |
 | `test_audit.py` | Запись аудит-событий в JSON |
 | `test_auth_router.py` | `/api/auth/*`: register, login, refresh, logout, me, delete |

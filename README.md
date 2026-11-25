@@ -74,6 +74,11 @@ log_level=INFO
 
 > На Amvera за HTTPS обязательно `cookie_secure=true`.
 
+> Политика хранения ПДн: `attempts_retention_days` — удалять попытки старше N дней
+> (по умолчанию **30** — месяц; `0` — очистка выключена), `retention_check_interval_hours` —
+> период проверки (по умолчанию **24 ч**, раз в сутки). Планировщик работает внутри
+> приложения (в едином образе, без внешнего cron).
+
 ### Деплой через git
 
 ```bash
@@ -101,6 +106,9 @@ docker run -v online_test_media:/data/uploads ...
 - `jwt_secret` — секрет подписи JWT (≥ 32 символов, обязательно случайный).
 - `admin_username`, `admin_email`, `admin_password` — учётка администратора (создаётся при первом старте).
 - `cookie_secure` — `true` в проде за HTTPS, `false` для http-теста.
+- `attempts_retention_days`, `retention_check_interval_hours` — автоочистка старых попыток
+  (retention ПДн): по умолчанию удаляются попытки старше **30 дней**, проверка **раз в сутки**
+  (`0` — очистка выключена).
 - `WEB_PORT` — внешний порт сайта.
 
 ## Разработка (без Docker)
