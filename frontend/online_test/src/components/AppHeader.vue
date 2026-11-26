@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { authState, logout } from '../auth';
+import logoUrl from '../assets/icon-192.png';
 
 const route = useRoute();
 const router = useRouter();
@@ -23,7 +24,10 @@ async function doLogout() {
 <template>
   <header class="app-header">
     <div class="app-header-inner">
-      <div class="brand" @click="router.push({ name: 'profile' })">Онлайн-тесты</div>
+      <div class="brand" @click="router.push({ name: 'profile' })">
+        <img class="brand-logo" :src="logoUrl" alt="Логотип" />
+        <span>Онлайн-тесты</span>
+      </div>
       <div class="header-right">
         <RouterLink
           v-if="route.name === 'profile'"
@@ -64,11 +68,19 @@ async function doLogout() {
   gap: 16px;
 }
 .brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 18px;
   font-weight: 700;
   color: #fe7c2b;
   cursor: pointer;
   user-select: none;
+}
+.brand-logo {
+  height: 28px;
+  width: auto;
+  display: block;
 }
 .header-right {
   display: flex;
